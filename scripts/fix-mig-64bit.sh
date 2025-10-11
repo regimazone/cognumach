@@ -1,9 +1,30 @@
 #!/bin/bash
+# NOTE: This script is now OBSOLETE as of the MIG code generator fix.
+# 
+# Previously, this script attempted to patch MIG-generated files after the fact
+# to fix hardcoded type size assertions. The root cause has been fixed in the
+# MIG code generator itself (mig/utils.c and mig/user.c) by removing the 
+# problematic static assertions entirely.
+#
+# The assertions were removed because MIG may be compiled for a different 
+# architecture than the target (e.g., 64-bit MIG generating code for 32-bit 
+# targets). The compiler will catch actual type size mismatches during the
+# build of the generated code.
+#
+# This script is kept for historical reference only.
+#
 # Fix MIG-generated type size assertions for both 32-bit and 64-bit architectures
 # This script fixes the hardcoded size assumptions in MIG output
 # Enhanced for NEXT_DEVELOPMENT_STEPS.md Phase 1 implementation
 
 set -euo pipefail
+
+echo "WARNING: This script is obsolete. The MIG code generator has been fixed."
+echo "Static assertions are no longer generated with hardcoded sizes."
+echo "This script is kept for historical reference only."
+echo ""
+echo "Press Ctrl+C to abort, or Enter to continue anyway..."
+read
 
 # Show usage and enhanced options
 usage() {
