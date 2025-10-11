@@ -12,13 +12,26 @@ On Windows, use WSL to run the build and static analysis:
 If WSL is not installed, install it from an elevated PowerShell:
   wsl --install
 
-This is GNU Mach, the GNU distribution of the Mach microkernel,
+This is CognuMach (Cognitive GNU Mach), an enhanced distribution of the
+GNU Mach microkernel with OpenCog-inspired cognitive agency capabilities,
 <http://www.gnu.org/software/hurd/microkernel/mach/gnumach.html>.  Welcome.
 
-GNU Mach is the microkernel upon which a GNU Hurd system is based.  It
+CognuMach is the microkernel upon which a GNU Hurd system is based. It
 provides an Inter Process Communication (IPC) mechanism that the Hurd
 uses to define interfaces for implementing in a distributed multi-server
 fashion the services a traditional operating system kernel provides.
+
+** Cognitive Agency **
+
+CognuMach extends GNU Mach with an OpenCog-inspired cognitive agency layer
+that brings artificial general intelligence (AGI) concepts to the kernel level:
+
+- Atomspace: Distributed knowledge representation inspired by OpenCog Hyperon
+- Cognitive Agents: Autonomous entities with goals, beliefs, and reasoning
+- Cognitive IPC: Enhanced message passing with semantic understanding
+- Adaptive Behavior: Learning and adaptation based on system state
+
+See docs/cognitive-agency.md and COGNITIVE_AGENCY_IMPLEMENTATION.md for details.
 
 GNU Mach runs on 32-bit x86 machines.  A version running on 64-bit x86
 (x86_64) machines is in progress.  Volunteers interested in ports to
