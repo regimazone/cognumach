@@ -32,6 +32,7 @@
 #include <mach/kern_return.h>
 #include <kern/lock.h>
 #include <kern/queue.h>
+#include <kern/kern_types.h>
 #include <ipc/ipc_types.h>
 
 /*

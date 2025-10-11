@@ -21,6 +21,9 @@
 #include <string.h>
 #include <mach/message.h>
 
+/* Forward declaration to avoid circular dependencies */
+#define IP_NULL ((ipc_port_t) 0)
+
 /* Global cognitive agency system */
 cognitive_agency_t global_cognitive_agency;
 
