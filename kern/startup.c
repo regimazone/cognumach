@@ -69,6 +69,7 @@
 #include <mach/valgrind.h>
 #include <kern/development_tools.h>
 #include <kern/instrumentation_integration.h>
+#include <kern/cognitive_agency.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 #include <vm/vm_object.h>
@@ -216,6 +217,9 @@ void setup_main(void)
 #if MACH_KDB
 	gdb_stub_init();
 #endif
+
+	/* Initialize OpenCog-inspired cognitive agency system */
+	cognitive_agency_init();
 
 	machine_info.max_cpus = NCPUS;
 	memsize = vm_page_mem_size();
