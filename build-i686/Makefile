@@ -1588,7 +1588,8 @@ am__libkernel_a_SOURCES_DIST = ddb/db_access.c ddb/db_access.h \
 	ipc/mach_port.c ipc/mach_port.h ipc/mach_debug.c ipc/port.h \
 	kern/act.c kern/act.h kern/assert.h kern/ast.c kern/ast.h \
 	kern/atomic.h kern/boot_script.h kern/bootstrap.c \
-	kern/bootstrap.h kern/counters.c kern/counters.h \
+	kern/bootstrap.h kern/cognitive_agency.c \
+	kern/cognitive_agency.h kern/counters.c kern/counters.h \
 	kern/cpu_number.h kern/debug.c kern/debug.h kern/dtrace.c \
 	kern/dtrace.h kern/dynamic_probes.c kern/dynamic_probes.h \
 	kern/instrumentation_integration.c \
@@ -1607,25 +1608,25 @@ am__libkernel_a_SOURCES_DIST = ddb/db_access.c ddb/db_access.h \
 	kern/mem_optimize.c kern/mem_optimize.h kern/mem_track.c \
 	kern/mem_track.h kern/pc_sample.c kern/pc_sample.h \
 	kern/perf_analysis.c kern/perf_analysis.h kern/perf_counters.c \
-	kern/perf_counters.h kern/printf.c kern/printf.h \
-	kern/security_monitor.c kern/security_monitor.h \
-	kern/cfi_integrity.c kern/cfi_integrity.h kern/priority.c \
-	kern/priority.h kern/processor.c kern/processor.h \
-	kern/profile.c kern/queue.c kern/queue.h kern/rbtree.c \
-	kern/rbtree.h kern/rbtree_i.h kern/rdxtree.c kern/rdxtree.h \
-	kern/rdxtree_i.h kern/refcount.h kern/slab.c kern/slab.h \
-	kern/smp.h kern/smp.c kern/smp_lock.h kern/smp_lock.c \
-	kern/smp_sched.c kern/sched.h kern/sched_prim.c \
-	kern/sched_prim.h kern/shuttle.h kern/startup.c kern/startup.h \
-	kern/strings.c kern/syscall_emulation.c \
-	kern/syscall_emulation.h kern/syscall_subr.c \
-	kern/syscall_subr.h kern/syscall_sw.c kern/syscall_sw.h \
-	kern/task.c kern/task.h kern/thread.c kern/thread.h \
-	kern/thread_swap.c kern/thread_swap.h kern/timer.c \
-	kern/timer.h kern/valgrind.c kern/vdso.c kern/vdso.h \
-	kern/development_tools.c kern/development_tools.h kern/xpr.c \
-	kern/xpr.h kern/elf-load.c kern/boot_script.c util/atoi.c \
-	util/atoi.h util/byteorder.h util/byteorder.c \
+	kern/perf_counters.h kern/new_feature.c kern/new_feature.h \
+	kern/printf.c kern/printf.h kern/security_monitor.c \
+	kern/security_monitor.h kern/cfi_integrity.c \
+	kern/cfi_integrity.h kern/priority.c kern/priority.h \
+	kern/processor.c kern/processor.h kern/profile.c kern/queue.c \
+	kern/queue.h kern/rbtree.c kern/rbtree.h kern/rbtree_i.h \
+	kern/rdxtree.c kern/rdxtree.h kern/rdxtree_i.h kern/refcount.h \
+	kern/slab.c kern/slab.h kern/smp.h kern/smp.c kern/smp_lock.h \
+	kern/smp_lock.c kern/smp_sched.c kern/sched.h \
+	kern/sched_prim.c kern/sched_prim.h kern/shuttle.h \
+	kern/startup.c kern/startup.h kern/strings.c \
+	kern/syscall_emulation.c kern/syscall_emulation.h \
+	kern/syscall_subr.c kern/syscall_subr.h kern/syscall_sw.c \
+	kern/syscall_sw.h kern/task.c kern/task.h kern/thread.c \
+	kern/thread.h kern/thread_swap.c kern/thread_swap.h \
+	kern/timer.c kern/timer.h kern/valgrind.c kern/vdso.c \
+	kern/vdso.h kern/development_tools.c kern/development_tools.h \
+	kern/xpr.c kern/xpr.h kern/elf-load.c kern/boot_script.c \
+	util/atoi.c util/atoi.h util/byteorder.h util/byteorder.c \
 	vm/memory_object_proxy.c vm/memory_object_proxy.h \
 	vm/memory_object.c vm/memory_object.h vm/pmap.h \
 	vm/vm_block_cache.c vm/vm_block_cache.h vm/vm_compress.c \
@@ -1896,9 +1897,9 @@ am_libkernel_a_OBJECTS = $(am__objects_3) ipc/copy_user.$(OBJEXT) \
 	ipc/ipc_target.$(OBJEXT) ipc/ipc_thread.$(OBJEXT) \
 	ipc/mach_msg.$(OBJEXT) ipc/mach_port.$(OBJEXT) \
 	ipc/mach_debug.$(OBJEXT) kern/act.$(OBJEXT) kern/ast.$(OBJEXT) \
-	kern/bootstrap.$(OBJEXT) kern/counters.$(OBJEXT) \
-	kern/debug.$(OBJEXT) kern/dtrace.$(OBJEXT) \
-	kern/dynamic_probes.$(OBJEXT) \
+	kern/bootstrap.$(OBJEXT) kern/cognitive_agency.$(OBJEXT) \
+	kern/counters.$(OBJEXT) kern/debug.$(OBJEXT) \
+	kern/dtrace.$(OBJEXT) kern/dynamic_probes.$(OBJEXT) \
 	kern/instrumentation_integration.$(OBJEXT) \
 	kern/system_debug.$(OBJEXT) kern/unified_debug.$(OBJEXT) \
 	kern/eventcount.$(OBJEXT) kern/exception.$(OBJEXT) \
@@ -1912,26 +1913,26 @@ am_libkernel_a_OBJECTS = $(am__objects_3) ipc/copy_user.$(OBJEXT) \
 	kern/machine.$(OBJEXT) kern/mem_optimize.$(OBJEXT) \
 	kern/mem_track.$(OBJEXT) kern/pc_sample.$(OBJEXT) \
 	kern/perf_analysis.$(OBJEXT) kern/perf_counters.$(OBJEXT) \
-	kern/printf.$(OBJEXT) kern/security_monitor.$(OBJEXT) \
-	kern/cfi_integrity.$(OBJEXT) kern/priority.$(OBJEXT) \
-	kern/processor.$(OBJEXT) kern/profile.$(OBJEXT) \
-	kern/queue.$(OBJEXT) kern/rbtree.$(OBJEXT) \
-	kern/rdxtree.$(OBJEXT) kern/slab.$(OBJEXT) kern/smp.$(OBJEXT) \
-	kern/smp_lock.$(OBJEXT) kern/smp_sched.$(OBJEXT) \
-	kern/sched_prim.$(OBJEXT) kern/startup.$(OBJEXT) \
-	kern/strings.$(OBJEXT) kern/syscall_emulation.$(OBJEXT) \
-	kern/syscall_subr.$(OBJEXT) kern/syscall_sw.$(OBJEXT) \
-	kern/task.$(OBJEXT) kern/thread.$(OBJEXT) \
-	kern/thread_swap.$(OBJEXT) kern/timer.$(OBJEXT) \
-	kern/valgrind.$(OBJEXT) kern/vdso.$(OBJEXT) \
-	kern/development_tools.$(OBJEXT) kern/xpr.$(OBJEXT) \
-	kern/elf-load.$(OBJEXT) kern/boot_script.$(OBJEXT) \
-	util/atoi.$(OBJEXT) util/byteorder.$(OBJEXT) \
-	vm/memory_object_proxy.$(OBJEXT) vm/memory_object.$(OBJEXT) \
-	vm/vm_block_cache.$(OBJEXT) vm/vm_compress.$(OBJEXT) \
-	vm/vm_debug.$(OBJEXT) vm/vm_external.$(OBJEXT) \
-	vm/vm_fault.$(OBJEXT) vm/vm_init.$(OBJEXT) \
-	vm/vm_kern.$(OBJEXT) vm/vm_map.$(OBJEXT) \
+	kern/new_feature.$(OBJEXT) kern/printf.$(OBJEXT) \
+	kern/security_monitor.$(OBJEXT) kern/cfi_integrity.$(OBJEXT) \
+	kern/priority.$(OBJEXT) kern/processor.$(OBJEXT) \
+	kern/profile.$(OBJEXT) kern/queue.$(OBJEXT) \
+	kern/rbtree.$(OBJEXT) kern/rdxtree.$(OBJEXT) \
+	kern/slab.$(OBJEXT) kern/smp.$(OBJEXT) kern/smp_lock.$(OBJEXT) \
+	kern/smp_sched.$(OBJEXT) kern/sched_prim.$(OBJEXT) \
+	kern/startup.$(OBJEXT) kern/strings.$(OBJEXT) \
+	kern/syscall_emulation.$(OBJEXT) kern/syscall_subr.$(OBJEXT) \
+	kern/syscall_sw.$(OBJEXT) kern/task.$(OBJEXT) \
+	kern/thread.$(OBJEXT) kern/thread_swap.$(OBJEXT) \
+	kern/timer.$(OBJEXT) kern/valgrind.$(OBJEXT) \
+	kern/vdso.$(OBJEXT) kern/development_tools.$(OBJEXT) \
+	kern/xpr.$(OBJEXT) kern/elf-load.$(OBJEXT) \
+	kern/boot_script.$(OBJEXT) util/atoi.$(OBJEXT) \
+	util/byteorder.$(OBJEXT) vm/memory_object_proxy.$(OBJEXT) \
+	vm/memory_object.$(OBJEXT) vm/vm_block_cache.$(OBJEXT) \
+	vm/vm_compress.$(OBJEXT) vm/vm_debug.$(OBJEXT) \
+	vm/vm_external.$(OBJEXT) vm/vm_fault.$(OBJEXT) \
+	vm/vm_init.$(OBJEXT) vm/vm_kern.$(OBJEXT) vm/vm_map.$(OBJEXT) \
 	vm/vm_object.$(OBJEXT) vm/vm_object_verify.$(OBJEXT) \
 	vm/vm_page.$(OBJEXT) vm/vm_pageout.$(OBJEXT) \
 	vm/vm_resident.$(OBJEXT) vm/vm_user.$(OBJEXT) \
@@ -2465,7 +2466,8 @@ am__depfiles_remade = ./$(DEPDIR)/version.Po chips/$(DEPDIR)/busses.Po \
 	ipc/$(DEPDIR)/mach_port.Po ipc/$(DEPDIR)/mach_port.server.Po \
 	kern/$(DEPDIR)/act.Po kern/$(DEPDIR)/ast.Po \
 	kern/$(DEPDIR)/boot_script.Po kern/$(DEPDIR)/bootstrap.Po \
-	kern/$(DEPDIR)/cfi_integrity.Po kern/$(DEPDIR)/counters.Po \
+	kern/$(DEPDIR)/cfi_integrity.Po \
+	kern/$(DEPDIR)/cognitive_agency.Po kern/$(DEPDIR)/counters.Po \
 	kern/$(DEPDIR)/debug.Po kern/$(DEPDIR)/development_tools.Po \
 	kern/$(DEPDIR)/dtrace.Po kern/$(DEPDIR)/dynamic_probes.Po \
 	kern/$(DEPDIR)/elf-load.Po kern/$(DEPDIR)/eventcount.Po \
@@ -2493,7 +2495,8 @@ am__depfiles_remade = ./$(DEPDIR)/version.Po chips/$(DEPDIR)/busses.Po \
 	kern/$(DEPDIR)/mach_factor.Po \
 	kern/$(DEPDIR)/mach_host.server.Po kern/$(DEPDIR)/machine.Po \
 	kern/$(DEPDIR)/mem_optimize.Po kern/$(DEPDIR)/mem_track.Po \
-	kern/$(DEPDIR)/pc_sample.Po kern/$(DEPDIR)/perf_analysis.Po \
+	kern/$(DEPDIR)/new_feature.Po kern/$(DEPDIR)/pc_sample.Po \
+	kern/$(DEPDIR)/perf_analysis.Po \
 	kern/$(DEPDIR)/perf_counters.Po kern/$(DEPDIR)/printf.Po \
 	kern/$(DEPDIR)/priority.Po kern/$(DEPDIR)/processor.Po \
 	kern/$(DEPDIR)/profile.Po kern/$(DEPDIR)/queue.Po \
@@ -3116,13 +3119,13 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} '/home/runner/work/cognu-mach/cognu-mach/build-aux/missing' aclocal-1.16
+ACLOCAL = ${SHELL} '/home/runner/work/cognumach/cognumach/build-aux/missing' aclocal-1.16
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
 AR = ar
-AUTOCONF = ${SHELL} '/home/runner/work/cognu-mach/cognu-mach/build-aux/missing' autoconf
-AUTOHEADER = ${SHELL} '/home/runner/work/cognu-mach/cognu-mach/build-aux/missing' autoheader
-AUTOMAKE = ${SHELL} '/home/runner/work/cognu-mach/cognu-mach/build-aux/missing' automake-1.16
+AUTOCONF = ${SHELL} '/home/runner/work/cognumach/cognumach/build-aux/missing' autoconf
+AUTOHEADER = ${SHELL} '/home/runner/work/cognumach/cognumach/build-aux/missing' autoheader
+AUTOMAKE = ${SHELL} '/home/runner/work/cognumach/cognumach/build-aux/missing' automake-1.16
 AWK = gawk
 AWK_PROG = awk
 CC = gcc -m32
@@ -3156,7 +3159,7 @@ LDFLAGS =
 LIBOBJS = 
 LIBS = 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} '/home/runner/work/cognu-mach/cognu-mach/build-aux/missing' makeinfo
+MAKEINFO = ${SHELL} '/home/runner/work/cognumach/cognumach/build-aux/missing' makeinfo
 MIG = mig
 MKDIR_P = /usr/bin/mkdir -p
 NM = nm
@@ -3183,10 +3186,10 @@ USER_CPPFLAGS =
 USER_MIG = 
 VERSION = 1.8
 _START_MAP = 0x1000000
-abs_builddir = /home/runner/work/cognu-mach/cognu-mach/build-i686
-abs_srcdir = /home/runner/work/cognu-mach/cognu-mach/build-i686/..
-abs_top_builddir = /home/runner/work/cognu-mach/cognu-mach/build-i686
-abs_top_srcdir = /home/runner/work/cognu-mach/cognu-mach/build-i686/..
+abs_builddir = /home/runner/work/cognumach/cognumach/build-i686
+abs_srcdir = /home/runner/work/cognumach/cognumach/build-i686/..
+abs_top_builddir = /home/runner/work/cognumach/cognumach/build-i686
+abs_top_srcdir = /home/runner/work/cognumach/cognumach/build-i686/..
 ac_ct_AR = ar
 ac_ct_CC = 
 am__include = include
@@ -3421,7 +3424,8 @@ libkernel_a_SOURCES = $(am__append_6) ipc/copy_user.c ipc/copy_user.h \
 	ipc/mach_port.c ipc/mach_port.h ipc/mach_debug.c ipc/port.h \
 	kern/act.c kern/act.h kern/assert.h kern/ast.c kern/ast.h \
 	kern/atomic.h kern/boot_script.h kern/bootstrap.c \
-	kern/bootstrap.h kern/counters.c kern/counters.h \
+	kern/bootstrap.h kern/cognitive_agency.c \
+	kern/cognitive_agency.h kern/counters.c kern/counters.h \
 	kern/cpu_number.h kern/debug.c kern/debug.h kern/dtrace.c \
 	kern/dtrace.h kern/dynamic_probes.c kern/dynamic_probes.h \
 	kern/instrumentation_integration.c \
@@ -3440,25 +3444,25 @@ libkernel_a_SOURCES = $(am__append_6) ipc/copy_user.c ipc/copy_user.h \
 	kern/mem_optimize.c kern/mem_optimize.h kern/mem_track.c \
 	kern/mem_track.h kern/pc_sample.c kern/pc_sample.h \
 	kern/perf_analysis.c kern/perf_analysis.h kern/perf_counters.c \
-	kern/perf_counters.h kern/printf.c kern/printf.h \
-	kern/security_monitor.c kern/security_monitor.h \
-	kern/cfi_integrity.c kern/cfi_integrity.h kern/priority.c \
-	kern/priority.h kern/processor.c kern/processor.h \
-	kern/profile.c kern/queue.c kern/queue.h kern/rbtree.c \
-	kern/rbtree.h kern/rbtree_i.h kern/rdxtree.c kern/rdxtree.h \
-	kern/rdxtree_i.h kern/refcount.h kern/slab.c kern/slab.h \
-	kern/smp.h kern/smp.c kern/smp_lock.h kern/smp_lock.c \
-	kern/smp_sched.c kern/sched.h kern/sched_prim.c \
-	kern/sched_prim.h kern/shuttle.h kern/startup.c kern/startup.h \
-	kern/strings.c kern/syscall_emulation.c \
-	kern/syscall_emulation.h kern/syscall_subr.c \
-	kern/syscall_subr.h kern/syscall_sw.c kern/syscall_sw.h \
-	kern/task.c kern/task.h kern/thread.c kern/thread.h \
-	kern/thread_swap.c kern/thread_swap.h kern/timer.c \
-	kern/timer.h kern/valgrind.c kern/vdso.c kern/vdso.h \
-	kern/development_tools.c kern/development_tools.h kern/xpr.c \
-	kern/xpr.h kern/elf-load.c kern/boot_script.c util/atoi.c \
-	util/atoi.h util/byteorder.h util/byteorder.c \
+	kern/perf_counters.h kern/new_feature.c kern/new_feature.h \
+	kern/printf.c kern/printf.h kern/security_monitor.c \
+	kern/security_monitor.h kern/cfi_integrity.c \
+	kern/cfi_integrity.h kern/priority.c kern/priority.h \
+	kern/processor.c kern/processor.h kern/profile.c kern/queue.c \
+	kern/queue.h kern/rbtree.c kern/rbtree.h kern/rbtree_i.h \
+	kern/rdxtree.c kern/rdxtree.h kern/rdxtree_i.h kern/refcount.h \
+	kern/slab.c kern/slab.h kern/smp.h kern/smp.c kern/smp_lock.h \
+	kern/smp_lock.c kern/smp_sched.c kern/sched.h \
+	kern/sched_prim.c kern/sched_prim.h kern/shuttle.h \
+	kern/startup.c kern/startup.h kern/strings.c \
+	kern/syscall_emulation.c kern/syscall_emulation.h \
+	kern/syscall_subr.c kern/syscall_subr.h kern/syscall_sw.c \
+	kern/syscall_sw.h kern/task.c kern/task.h kern/thread.c \
+	kern/thread.h kern/thread_swap.c kern/thread_swap.h \
+	kern/timer.c kern/timer.h kern/valgrind.c kern/vdso.c \
+	kern/vdso.h kern/development_tools.c kern/development_tools.h \
+	kern/xpr.c kern/xpr.h kern/elf-load.c kern/boot_script.c \
+	util/atoi.c util/atoi.h util/byteorder.h util/byteorder.c \
 	vm/memory_object_proxy.c vm/memory_object_proxy.h \
 	vm/memory_object.c vm/memory_object.h vm/pmap.h \
 	vm/vm_block_cache.c vm/vm_block_cache.h vm/vm_compress.c \
@@ -3942,7 +3946,9 @@ USER_TESTS := \
 	tests/test-valgrind \
 	tests/test-vdso \
 	tests/test-mach5-research \
-	tests/test-virtio
+	tests/test-virtio \
+	tests/test-kernel-feature \
+	tests/test-cognitive
 
 USER_TESTS_CLEAN = $(subst tests/,clean-,$(USER_TESTS))
 
@@ -4259,6 +4265,8 @@ kern/ast.$(OBJEXT): kern/$(am__dirstamp) \
 	kern/$(DEPDIR)/$(am__dirstamp)
 kern/bootstrap.$(OBJEXT): kern/$(am__dirstamp) \
 	kern/$(DEPDIR)/$(am__dirstamp)
+kern/cognitive_agency.$(OBJEXT): kern/$(am__dirstamp) \
+	kern/$(DEPDIR)/$(am__dirstamp)
 kern/counters.$(OBJEXT): kern/$(am__dirstamp) \
 	kern/$(DEPDIR)/$(am__dirstamp)
 kern/debug.$(OBJEXT): kern/$(am__dirstamp) \
@@ -4316,6 +4324,8 @@ kern/pc_sample.$(OBJEXT): kern/$(am__dirstamp) \
 kern/perf_analysis.$(OBJEXT): kern/$(am__dirstamp) \
 	kern/$(DEPDIR)/$(am__dirstamp)
 kern/perf_counters.$(OBJEXT): kern/$(am__dirstamp) \
+	kern/$(DEPDIR)/$(am__dirstamp)
+kern/new_feature.$(OBJEXT): kern/$(am__dirstamp) \
 	kern/$(DEPDIR)/$(am__dirstamp)
 kern/printf.$(OBJEXT): kern/$(am__dirstamp) \
 	kern/$(DEPDIR)/$(am__dirstamp)
@@ -5437,6 +5447,7 @@ include kern/$(DEPDIR)/ast.Po # am--include-marker
 include kern/$(DEPDIR)/boot_script.Po # am--include-marker
 include kern/$(DEPDIR)/bootstrap.Po # am--include-marker
 include kern/$(DEPDIR)/cfi_integrity.Po # am--include-marker
+include kern/$(DEPDIR)/cognitive_agency.Po # am--include-marker
 include kern/$(DEPDIR)/counters.Po # am--include-marker
 include kern/$(DEPDIR)/debug.Po # am--include-marker
 include kern/$(DEPDIR)/development_tools.Po # am--include-marker
@@ -5478,6 +5489,7 @@ include kern/$(DEPDIR)/mach_host.server.Po # am--include-marker
 include kern/$(DEPDIR)/machine.Po # am--include-marker
 include kern/$(DEPDIR)/mem_optimize.Po # am--include-marker
 include kern/$(DEPDIR)/mem_track.Po # am--include-marker
+include kern/$(DEPDIR)/new_feature.Po # am--include-marker
 include kern/$(DEPDIR)/pc_sample.Po # am--include-marker
 include kern/$(DEPDIR)/perf_analysis.Po # am--include-marker
 include kern/$(DEPDIR)/perf_counters.Po # am--include-marker
@@ -5699,7 +5711,15 @@ include xen/$(DEPDIR)/xen.Po # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
-	@echo '# dummy' >$@-t && $(am__mv) $@-t $@
+	# Ugly bootstrap hack to get to-be-generated files created
+	# Try to guess what file this dependency file is from...
+	@f=$(srcdir)/`dirname "$(@D)"`/`basename "$@" .Po | sed s/lib[^-]\*-//` ; \
+	for f in "$$f"*; do \
+		case $$f in \
+			*.c | *.S) echo "$$f"': $$(filter-out $$(DIST_SOURCES),$$(SOURCES))' ;; \
+			*) echo '# dummy';; \
+		esac ; \
+	done >$@-t && $(am__mv) $@-t $@
 
 am--depfiles: $(am__depfiles_remade)
 
@@ -8907,6 +8927,20 @@ tests/test-virtio.log: tests/test-virtio
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
 	"$$tst" $(AM_TESTS_FD_REDIRECT)
+tests/test-kernel-feature.log: tests/test-kernel-feature
+	@p='tests/test-kernel-feature'; \
+	b='tests/test-kernel-feature'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+tests/test-cognitive.log: tests/test-cognitive
+	@p='tests/test-cognitive'; \
+	b='tests/test-cognitive'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
 .test.log:
 	@p='$<'; \
 	$(am__set_b); \
@@ -9380,6 +9414,7 @@ distclean: distclean-recursive
 	-rm -f kern/$(DEPDIR)/boot_script.Po
 	-rm -f kern/$(DEPDIR)/bootstrap.Po
 	-rm -f kern/$(DEPDIR)/cfi_integrity.Po
+	-rm -f kern/$(DEPDIR)/cognitive_agency.Po
 	-rm -f kern/$(DEPDIR)/counters.Po
 	-rm -f kern/$(DEPDIR)/debug.Po
 	-rm -f kern/$(DEPDIR)/development_tools.Po
@@ -9421,6 +9456,7 @@ distclean: distclean-recursive
 	-rm -f kern/$(DEPDIR)/machine.Po
 	-rm -f kern/$(DEPDIR)/mem_optimize.Po
 	-rm -f kern/$(DEPDIR)/mem_track.Po
+	-rm -f kern/$(DEPDIR)/new_feature.Po
 	-rm -f kern/$(DEPDIR)/pc_sample.Po
 	-rm -f kern/$(DEPDIR)/perf_analysis.Po
 	-rm -f kern/$(DEPDIR)/perf_counters.Po
@@ -9923,6 +9959,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f kern/$(DEPDIR)/boot_script.Po
 	-rm -f kern/$(DEPDIR)/bootstrap.Po
 	-rm -f kern/$(DEPDIR)/cfi_integrity.Po
+	-rm -f kern/$(DEPDIR)/cognitive_agency.Po
 	-rm -f kern/$(DEPDIR)/counters.Po
 	-rm -f kern/$(DEPDIR)/debug.Po
 	-rm -f kern/$(DEPDIR)/development_tools.Po
@@ -9964,6 +10001,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f kern/$(DEPDIR)/machine.Po
 	-rm -f kern/$(DEPDIR)/mem_optimize.Po
 	-rm -f kern/$(DEPDIR)/mem_track.Po
+	-rm -f kern/$(DEPDIR)/new_feature.Po
 	-rm -f kern/$(DEPDIR)/pc_sample.Po
 	-rm -f kern/$(DEPDIR)/perf_analysis.Po
 	-rm -f kern/$(DEPDIR)/perf_counters.Po

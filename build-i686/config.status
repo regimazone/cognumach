@@ -435,7 +435,7 @@ Copyright (C) 2021 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/home/runner/work/cognu-mach/cognu-mach/build-i686'
+ac_pwd='/home/runner/work/cognumach/cognumach/build-i686'
 srcdir='..'
 INSTALL='/usr/bin/install -c'
 MKDIR_P='/usr/bin/mkdir -p'
@@ -928,12 +928,12 @@ S["mkdir_p"]="$(MKDIR_P)"
 S["MKDIR_P"]="/usr/bin/mkdir -p"
 S["INSTALL_STRIP_PROGRAM"]="$(install_sh) -c -s"
 S["STRIP"]="strip"
-S["install_sh"]="${SHELL} /home/runner/work/cognu-mach/cognu-mach/build-aux/install-sh"
-S["MAKEINFO"]="${SHELL} '/home/runner/work/cognu-mach/cognu-mach/build-aux/missing' makeinfo"
-S["AUTOHEADER"]="${SHELL} '/home/runner/work/cognu-mach/cognu-mach/build-aux/missing' autoheader"
-S["AUTOMAKE"]="${SHELL} '/home/runner/work/cognu-mach/cognu-mach/build-aux/missing' automake-1.16"
-S["AUTOCONF"]="${SHELL} '/home/runner/work/cognu-mach/cognu-mach/build-aux/missing' autoconf"
-S["ACLOCAL"]="${SHELL} '/home/runner/work/cognu-mach/cognu-mach/build-aux/missing' aclocal-1.16"
+S["install_sh"]="${SHELL} /home/runner/work/cognumach/cognumach/build-aux/install-sh"
+S["MAKEINFO"]="${SHELL} '/home/runner/work/cognumach/cognumach/build-aux/missing' makeinfo"
+S["AUTOHEADER"]="${SHELL} '/home/runner/work/cognumach/cognumach/build-aux/missing' autoheader"
+S["AUTOMAKE"]="${SHELL} '/home/runner/work/cognumach/cognumach/build-aux/missing' automake-1.16"
+S["AUTOCONF"]="${SHELL} '/home/runner/work/cognumach/cognumach/build-aux/missing' autoconf"
+S["ACLOCAL"]="${SHELL} '/home/runner/work/cognumach/cognumach/build-aux/missing' aclocal-1.16"
 S["VERSION"]="1.8"
 S["PACKAGE"]="gnumach"
 S["CYGPATH_W"]="echo"

@@ -61,6 +61,17 @@ typedef struct cognitive_truth_value {
 } cognitive_truth_value_t;
 
 /*
+ * Cognitive Atom Link
+ * Represents relationships between atoms
+ */
+typedef struct cognitive_atom_link {
+	queue_chain_t link;                    /* Queue linkage */
+	struct cognitive_atom *target;         /* Target atom */
+	unsigned int link_type;                /* Type of relationship */
+	float strength;                        /* Link strength [0.0, 1.0] */
+} *cognitive_atom_link_t;
+
+/*
  * Cognitive Atom
  * Basic unit of knowledge in the atomspace
  */
@@ -72,6 +83,8 @@ typedef struct cognitive_atom {
 	cognitive_truth_value_t truth;         /* Truth value */
 	void *data;                            /* Type-specific data */
 	unsigned int ref_count;                /* Reference counter */
+	queue_head_t outgoing_links;           /* Outgoing relationships */
+	queue_head_t incoming_links;           /* Incoming relationships */
 	decl_simple_lock_data(, lock)         /* Synchronization */
 } *cognitive_atom_t;
 
@@ -90,6 +103,21 @@ typedef enum {
 } cognitive_agent_state_t;
 
 /*
+ * Cognitive Message
+ * Message in agent's message queue
+ */
+typedef struct cognitive_message {
+	queue_chain_t link;                    /* Queue linkage */
+	struct cognitive_agent *sender;        /* Sender agent */
+	struct cognitive_atom *content;        /* Message content */
+	unsigned int priority;                 /* Message priority */
+	unsigned int timestamp;                /* Timestamp */
+} *cognitive_message_t;
+
+/* Forward declaration for circular dependency */
+typedef struct cognitive_plan *cognitive_plan_t;
+
+/*
  * Cognitive Agent
  * Autonomous entity with goals and reasoning capabilities
  */
@@ -103,6 +131,10 @@ typedef struct cognitive_agent {
 	queue_head_t goals;                    /* Goal queue */
 	queue_head_t beliefs;                  /* Belief set */
 	queue_head_t knowledge;                /* Knowledge base (atoms) */
+	queue_head_t message_queue;            /* Incoming messages */
+	unsigned int message_count;            /* Message queue size */
+	queue_head_t plans;                    /* Active plans */
+	cognitive_plan_t current_plan;         /* Current executing plan */
 	
 	/* IPC integration */
 	ipc_port_t control_port;               /* Control port */
@@ -116,6 +148,7 @@ typedef struct cognitive_agent {
 	unsigned int reasoning_cycles;         /* Reasoning iterations */
 	unsigned int actions_executed;         /* Actions taken */
 	unsigned int messages_processed;       /* Messages handled */
+	unsigned int messages_sent;            /* Messages sent */
 	
 	decl_simple_lock_data(, lock)         /* Synchronization */
 } *cognitive_agent_t;
@@ -134,6 +167,46 @@ typedef struct cognitive_atomspace {
 } *cognitive_atomspace_t;
 
 /*
+ * Cognitive Inference Rule
+ * Simple rule for forward chaining inference
+ */
+typedef struct cognitive_rule {
+	queue_chain_t link;                    /* Queue linkage */
+	char name[64];                         /* Rule name */
+	cognitive_atom_type_t condition_type;  /* Condition type */
+	cognitive_atom_type_t conclusion_type; /* Conclusion type */
+	float confidence_threshold;            /* Minimum confidence */
+	unsigned int times_applied;            /* Application count */
+} *cognitive_rule_t;
+
+/*
+ * Cognitive Action
+ * Planned action with preconditions and effects
+ */
+typedef struct cognitive_action {
+	queue_chain_t link;                    /* Queue linkage */
+	char name[64];                         /* Action name */
+	cognitive_atom_t precondition;         /* Required state */
+	cognitive_atom_t effect;               /* Expected result */
+	float cost;                            /* Execution cost */
+	unsigned int priority;                 /* Action priority */
+	boolean_t completed;                   /* Execution status */
+} *cognitive_action_t;
+
+/*
+ * Cognitive Plan
+ * Sequence of actions to achieve a goal
+ */
+struct cognitive_plan {
+	queue_chain_t link;                    /* Queue linkage */
+	cognitive_atom_t goal;                 /* Target goal */
+	queue_head_t actions;                  /* Action sequence */
+	unsigned int action_count;             /* Total actions */
+	float total_cost;                      /* Plan cost */
+	boolean_t valid;                       /* Validity flag */
+};
+
+/*
  * Cognitive Agency System
  * Global cognitive system state
  */
@@ -141,6 +214,8 @@ typedef struct cognitive_agency {
 	queue_head_t agents;                   /* Active agents */
 	unsigned int agent_count;              /* Total agents */
 	cognitive_atomspace_t atomspace;       /* Global atomspace */
+	queue_head_t rules;                    /* Inference rules */
+	unsigned int rule_count;               /* Total rules */
 	boolean_t initialized;                 /* Initialization flag */
 	decl_simple_lock_data(, lock)         /* Global lock */
 } cognitive_agency_t;
@@ -173,6 +248,16 @@ extern kern_return_t cognitive_atom_set_truth(
 	cognitive_atom_t atom,
 	float strength,
 	float confidence);
+extern kern_return_t cognitive_atom_create_link(
+	cognitive_atom_t from,
+	cognitive_atom_t to,
+	unsigned int link_type,
+	float strength);
+extern kern_return_t cognitive_atom_remove_link(
+	cognitive_atom_t from,
+	cognitive_atom_t to);
+extern unsigned int cognitive_atom_count_links(
+	cognitive_atom_t atom);
 
 /*
  * Agent operations
@@ -202,6 +287,61 @@ extern kern_return_t cognitive_agent_send_message(
 extern kern_return_t cognitive_agent_receive_message(
 	cognitive_agent_t agent,
 	cognitive_atom_t *message);
+extern unsigned int cognitive_agent_pending_messages(
+	cognitive_agent_t agent);
+extern kern_return_t cognitive_agent_learn(
+	cognitive_agent_t agent,
+	cognitive_atom_t experience);
+
+/*
+ * Pattern matching and queries
+ */
+extern cognitive_atom_t cognitive_atomspace_find_by_type(
+	cognitive_atomspace_t space,
+	cognitive_atom_type_t type);
+extern unsigned int cognitive_atomspace_query(
+	cognitive_atomspace_t space,
+	cognitive_atom_type_t type,
+	cognitive_atom_t *results,
+	unsigned int max_results);
+extern kern_return_t cognitive_atom_traverse_links(
+	cognitive_atom_t atom,
+	void (*callback)(cognitive_atom_t, void *),
+	void *context);
+
+/*
+ * Inference and reasoning
+ */
+extern cognitive_rule_t cognitive_rule_create(
+	const char *name,
+	cognitive_atom_type_t condition_type,
+	cognitive_atom_type_t conclusion_type,
+	float confidence_threshold);
+extern void cognitive_rule_destroy(cognitive_rule_t rule);
+extern kern_return_t cognitive_agency_add_rule(cognitive_rule_t rule);
+extern kern_return_t cognitive_agent_apply_rules(
+	cognitive_agent_t agent);
+
+/*
+ * Planning and action execution
+ */
+extern cognitive_action_t cognitive_action_create(
+	const char *name,
+	cognitive_atom_t precondition,
+	cognitive_atom_t effect,
+	float cost);
+extern void cognitive_action_destroy(cognitive_action_t action);
+extern cognitive_plan_t cognitive_plan_create(
+	cognitive_atom_t goal);
+extern void cognitive_plan_destroy(cognitive_plan_t plan);
+extern kern_return_t cognitive_plan_add_action(
+	cognitive_plan_t plan,
+	cognitive_action_t action);
+extern kern_return_t cognitive_agent_create_plan(
+	cognitive_agent_t agent,
+	cognitive_atom_t goal);
+extern kern_return_t cognitive_agent_execute_plan(
+	cognitive_agent_t agent);
 
 /*
  * Query and introspection

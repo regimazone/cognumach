@@ -113,6 +113,22 @@ kern_return_t cognitive_atom_set_truth(
     cognitive_atom_t atom,
     float strength,
     float confidence);
+
+/* Create link between atoms */
+kern_return_t cognitive_atom_create_link(
+    cognitive_atom_t from,
+    cognitive_atom_t to,
+    unsigned int link_type,
+    float strength);
+
+/* Remove link between atoms */
+kern_return_t cognitive_atom_remove_link(
+    cognitive_atom_t from,
+    cognitive_atom_t to);
+
+/* Count links for an atom */
+unsigned int cognitive_atom_count_links(
+    cognitive_atom_t atom);
 ```
 
 ### Agent Management
@@ -146,6 +162,55 @@ kern_return_t cognitive_agent_reason(
 
 /* Execute actions */
 kern_return_t cognitive_agent_act(
+    cognitive_agent_t agent);
+
+/* Learn from experience */
+kern_return_t cognitive_agent_learn(
+    cognitive_agent_t agent,
+    cognitive_atom_t experience);
+
+/* Send message between agents */
+kern_return_t cognitive_agent_send_message(
+    cognitive_agent_t from,
+    cognitive_agent_t to,
+    cognitive_atom_t message);
+
+/* Receive message */
+kern_return_t cognitive_agent_receive_message(
+    cognitive_agent_t agent,
+    cognitive_atom_t *message);
+
+/* Check pending messages */
+unsigned int cognitive_agent_pending_messages(
+    cognitive_agent_t agent);
+
+/* Pattern matching */
+cognitive_atom_t cognitive_atomspace_find_by_type(
+    cognitive_atomspace_t space,
+    cognitive_atom_type_t type);
+
+unsigned int cognitive_atomspace_query(
+    cognitive_atomspace_t space,
+    cognitive_atom_type_t type,
+    cognitive_atom_t *results,
+    unsigned int max_results);
+
+kern_return_t cognitive_atom_traverse_links(
+    cognitive_atom_t atom,
+    void (*callback)(cognitive_atom_t, void *),
+    void *context);
+
+/* Inference rules */
+cognitive_rule_t cognitive_rule_create(
+    const char *name,
+    cognitive_atom_type_t condition_type,
+    cognitive_atom_type_t conclusion_type,
+    float confidence_threshold);
+
+kern_return_t cognitive_agency_add_rule(
+    cognitive_rule_t rule);
+
+kern_return_t cognitive_agent_apply_rules(
     cognitive_agent_t agent);
 ```
 
@@ -236,23 +301,243 @@ void demonstrate_agent_communication(void)
 }
 ```
 
-### Example 3: Knowledge Representation
+### Example 3: Knowledge Representation with Links
 
 ```c
 void build_knowledge_base(void)
 {
     cognitive_atomspace_t space = global_cognitive_agency.atomspace;
-    cognitive_atom_t concept1, concept2, link;
+    cognitive_atom_t concept1, concept2;
     
     /* Create concepts */
     concept1 = cognitive_atom_create(space, ATOM_TYPE_CONCEPT, "memory");
     concept2 = cognitive_atom_create(space, ATOM_TYPE_CONCEPT, "performance");
     
-    /* Create relationship */
-    link = cognitive_atom_create(space, ATOM_TYPE_LINK, "affects");
-    cognitive_atom_set_truth(link, 0.85f, 0.8f);
+    /* Create relationship link between atoms */
+    cognitive_atom_create_link(concept1, concept2, 1 /* AFFECTS */, 0.85f);
     
-    /* This represents: memory "affects" performance with 85% strength */
+    /* Set truth values */
+    cognitive_atom_set_truth(concept1, 0.9f, 0.8f);
+    cognitive_atom_set_truth(concept2, 0.8f, 0.7f);
+    
+    /* Query link count */
+    unsigned int links = cognitive_atom_count_links(concept1);
+    printf("Concept 'memory' has %u links\n", links);
+}
+```
+
+### Example 4: Agent Learning
+
+```c
+void demonstrate_agent_learning(void)
+{
+    cognitive_agent_t agent;
+    cognitive_atom_t experience;
+    
+    /* Create learning agent */
+    agent = cognitive_agent_create("adaptive_scheduler", current_task());
+    
+    /* Create experience atom */
+    experience = cognitive_atom_create(
+        global_cognitive_agency.atomspace,
+        ATOM_TYPE_VALUE,
+        "reduced_context_switches");
+    cognitive_atom_set_truth(experience, 0.8f, 0.5f);
+    
+    /* Agent learns from experience */
+    cognitive_agent_learn(agent, experience);
+    
+    /* Truth value confidence increased through learning */
+    printf("Experience confidence: %.2f\n", experience->truth.confidence);
+}
+```
+
+### Example 5: Message Queue and Communication
+
+```c
+void demonstrate_message_queue(void)
+{
+    cognitive_agent_t sender, receiver;
+    cognitive_atom_t msg1, msg2, received;
+    
+    /* Create agents */
+    sender = cognitive_agent_create("monitor", current_task());
+    receiver = cognitive_agent_create("optimizer", current_task());
+    
+    /* Create messages */
+    msg1 = cognitive_atom_create(
+        global_cognitive_agency.atomspace,
+        ATOM_TYPE_VALUE,
+        "high_cpu_load");
+    msg2 = cognitive_atom_create(
+        global_cognitive_agency.atomspace,
+        ATOM_TYPE_VALUE,
+        "memory_pressure");
+    
+    /* Send messages */
+    cognitive_agent_send_message(sender, receiver, msg1);
+    cognitive_agent_send_message(sender, receiver, msg2);
+    
+    /* Check message queue */
+    unsigned int pending = cognitive_agent_pending_messages(receiver);
+    printf("Receiver has %u pending messages\n", pending);
+    
+    /* Receive messages */
+    while (cognitive_agent_pending_messages(receiver) > 0) {
+        cognitive_agent_receive_message(receiver, &received);
+        printf("Received message: %s\n", received->name);
+        
+        /* Process message through reasoning */
+        cognitive_agent_reason(receiver);
+    }
+}
+```
+
+### Example 6: Pattern Matching and Queries
+
+```c
+void demonstrate_pattern_matching(void)
+{
+    cognitive_atomspace_t space = global_cognitive_agency.atomspace;
+    cognitive_atom_t results[10];
+    unsigned int count;
+    
+    /* Query for all goal atoms */
+    count = cognitive_atomspace_query(
+        space,
+        ATOM_TYPE_GOAL,
+        results,
+        10);
+    
+    printf("Found %u goal atoms:\n", count);
+    for (unsigned int i = 0; i < count; i++) {
+        printf("  - %s (strength=%.2f, confidence=%.2f)\n",
+               results[i]->name,
+               results[i]->truth.strength,
+               results[i]->truth.confidence);
+    }
+    
+    /* Find first concept atom */
+    cognitive_atom_t concept = cognitive_atomspace_find_by_type(
+        space,
+        ATOM_TYPE_CONCEPT);
+    
+    if (concept != NULL) {
+        /* Traverse links from this concept */
+        cognitive_atom_traverse_links(
+            concept,
+            print_linked_atom,
+            NULL);
+    }
+}
+```
+
+### Example 7: Inference Rules and Forward Chaining
+
+```c
+void demonstrate_inference_rules(void)
+{
+    cognitive_agent_t agent;
+    cognitive_rule_t rule1, rule2;
+    cognitive_atom_t belief, goal;
+    
+    /* Create agent */
+    agent = cognitive_agent_create("reasoner", current_task());
+    
+    /* Create inference rules */
+    rule1 = cognitive_rule_create(
+        "high_load_implies_optimization",
+        ATOM_TYPE_BELIEF,    /* Condition: belief */
+        ATOM_TYPE_ACTION,    /* Conclusion: action */
+        0.7f);               /* Confidence threshold */
+    
+    rule2 = cognitive_rule_create(
+        "optimization_needed_implies_action",
+        ATOM_TYPE_ACTION,    /* Condition: action needed */
+        ATOM_TYPE_SCHEMA,    /* Conclusion: behavior schema */
+        0.6f);
+    
+    /* Add rules to global agency */
+    cognitive_agency_add_rule(rule1);
+    cognitive_agency_add_rule(rule2);
+    
+    /* Create belief that will trigger rule */
+    belief = cognitive_atom_create(
+        global_cognitive_agency.atomspace,
+        ATOM_TYPE_BELIEF,
+        "cpu_load_high");
+    cognitive_atom_set_truth(belief, 0.9f, 0.85f);
+    cognitive_agent_add_belief(agent, belief);
+    
+    /* Apply rules - will create inferred knowledge */
+    kern_return_t result = cognitive_agent_apply_rules(agent);
+    if (result == KERN_SUCCESS) {
+        printf("Rules applied successfully\n");
+        printf("New knowledge inferred from beliefs\n");
+    }
+    
+    /* Perform full reasoning cycle (includes rule application) */
+    cognitive_agent_reason(agent);
+}
+```
+
+### Example 8: Action Planning and Execution
+
+```c
+void demonstrate_action_planning(void)
+{
+    cognitive_agent_t agent;
+    cognitive_atom_t goal, belief;
+    cognitive_plan_t plan;
+    cognitive_action_t action1, action2;
+    
+    /* Create agent */
+    agent = cognitive_agent_create("planner", current_task());
+    
+    /* Create goal */
+    goal = cognitive_atom_create(
+        global_cognitive_agency.atomspace,
+        ATOM_TYPE_GOAL,
+        "optimize_performance");
+    cognitive_atom_set_truth(goal, 1.0f, 0.9f);
+    cognitive_agent_add_goal(agent, goal);
+    
+    /* Create supporting belief */
+    belief = cognitive_atom_create(
+        global_cognitive_agency.atomspace,
+        ATOM_TYPE_BELIEF,
+        "system_needs_optimization");
+    cognitive_atom_set_truth(belief, 0.85f, 0.8f);
+    cognitive_agent_add_belief(agent, belief);
+    
+    /* Create plan for goal */
+    cognitive_agent_create_plan(agent, goal);
+    
+    /* Alternatively, manually create and add actions */
+    action1 = cognitive_action_create(
+        "analyze_bottlenecks",
+        belief,              /* Precondition */
+        goal,                /* Effect */
+        1.5f);               /* Cost */
+    
+    action2 = cognitive_action_create(
+        "apply_optimizations",
+        goal,                /* Precondition */
+        goal,                /* Effect */
+        2.0f);               /* Cost */
+    
+    /* Create custom plan */
+    plan = cognitive_plan_create(goal);
+    cognitive_plan_add_action(plan, action1);
+    cognitive_plan_add_action(plan, action2);
+    
+    printf("Plan created: %u actions, cost=%.1f\n",
+           plan->action_count, plan->total_cost);
+    
+    /* Execute the plan */
+    cognitive_agent_execute_plan(agent);
+    
+    printf("Plan executed successfully\n");
 }
 ```
 
