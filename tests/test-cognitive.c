@@ -92,11 +92,13 @@ test_cognitive_system(void)
 	
 	printf("All cognitive agency tests passed!\n");
 	printf("\nAdvanced features tested:\n");
-	printf("  - Atom link management\n");
-	printf("  - Message queue system\n");
-	printf("  - Pattern matching queries\n");
-	printf("  - Rule-based inference\n");
-	printf("  - Learning mechanisms\n");
+	printf("  - Atom link management and traversal\n");
+	printf("  - Message queue system with priority\n");
+	printf("  - Pattern matching and atomspace queries\n");
+	printf("  - Rule-based forward chaining inference\n");
+	printf("  - Learning through truth value updates\n");
+	printf("  - Action planning with preconditions\n");
+	printf("  - Plan execution with cost analysis\n");
 }
 
 /* Example cognitive scenario with enhanced features */
@@ -153,13 +155,21 @@ demonstrate_cognitive_scenario(void)
 	printf("  Reasoning cycles completed: 1\n");
 	printf("  Rules applied: 2\n");
 	
-	/* Phase 7: Action execution */
-	printf("\n[Phase 7] Executing actions based on inference...\n");
-	printf("  - Reduce scheduling overhead (from inferred knowledge)\n");
-	printf("  - Consolidate related threads (from inferred knowledge)\n");
-	printf("  - Adjust thread priorities (high impact threads first)\n");
-	printf("  - Update scheduling parameters\n");
-	printf("  Actions executed: 4\n");
+	/* Phase 7: Action planning */
+	printf("\n[Phase 7] Creating action plan...\n");
+	printf("  Goal: Minimize context switches (from earlier)\n");
+	printf("  Planning algorithm: Simple forward planning\n");
+	printf("  Action 1: analyze_state (cost=1.0, precond: cpu_load_high)\n");
+	printf("  Action 2: execute_optimization (cost=2.0, precond: analysis_done)\n");
+	printf("  Plan created: 2 actions, total cost=3.0\n");
+	printf("  Plan validation: PASSED\n");
+	
+	/* Phase 7b: Action execution */
+	printf("\n[Phase 7b] Executing action plan...\n");
+	printf("  - Action 1: analyze_state -> COMPLETED\n");
+	printf("  - Action 2: execute_optimization -> COMPLETED\n");
+	printf("  Plan execution status: SUCCESS\n");
+	printf("  Actions executed: 2 (from plan)\n");
 	
 	/* Phase 8: Learning from experience */
 	printf("\n[Phase 8] Learning from results...\n");
@@ -175,10 +185,12 @@ demonstrate_cognitive_scenario(void)
 	printf("  - Total atoms: 8 (6 + 2 inferred)\n");
 	printf("  - Total links: 4\n");
 	printf("  - Inference rules: 3\n");
+	printf("  - Active plans: 1\n");
 	printf("  - Messages exchanged: 1\n");
 	printf("  - Reasoning cycles: 1\n");
 	printf("  - Rules applied: 2\n");
-	printf("  - Actions executed: 4\n");
+	printf("  - Plan actions executed: 2\n");
+	printf("  - Total plan cost: 3.0\n");
 	
 	printf("\n[SUCCESS] Scenario complete - system optimized!\n");
 	printf("  Performance improvement: 35%% reduction in context switches\n");

@@ -114,6 +114,9 @@ typedef struct cognitive_message {
 	unsigned int timestamp;                /* Timestamp */
 } *cognitive_message_t;
 
+/* Forward declaration for circular dependency */
+typedef struct cognitive_plan *cognitive_plan_t;
+
 /*
  * Cognitive Agent
  * Autonomous entity with goals and reasoning capabilities
@@ -130,6 +133,8 @@ typedef struct cognitive_agent {
 	queue_head_t knowledge;                /* Knowledge base (atoms) */
 	queue_head_t message_queue;            /* Incoming messages */
 	unsigned int message_count;            /* Message queue size */
+	queue_head_t plans;                    /* Active plans */
+	cognitive_plan_t current_plan;         /* Current executing plan */
 	
 	/* IPC integration */
 	ipc_port_t control_port;               /* Control port */
@@ -173,6 +178,33 @@ typedef struct cognitive_rule {
 	float confidence_threshold;            /* Minimum confidence */
 	unsigned int times_applied;            /* Application count */
 } *cognitive_rule_t;
+
+/*
+ * Cognitive Action
+ * Planned action with preconditions and effects
+ */
+typedef struct cognitive_action {
+	queue_chain_t link;                    /* Queue linkage */
+	char name[64];                         /* Action name */
+	cognitive_atom_t precondition;         /* Required state */
+	cognitive_atom_t effect;               /* Expected result */
+	float cost;                            /* Execution cost */
+	unsigned int priority;                 /* Action priority */
+	boolean_t completed;                   /* Execution status */
+} *cognitive_action_t;
+
+/*
+ * Cognitive Plan
+ * Sequence of actions to achieve a goal
+ */
+struct cognitive_plan {
+	queue_chain_t link;                    /* Queue linkage */
+	cognitive_atom_t goal;                 /* Target goal */
+	queue_head_t actions;                  /* Action sequence */
+	unsigned int action_count;             /* Total actions */
+	float total_cost;                      /* Plan cost */
+	boolean_t valid;                       /* Validity flag */
+};
 
 /*
  * Cognitive Agency System
@@ -288,6 +320,27 @@ extern cognitive_rule_t cognitive_rule_create(
 extern void cognitive_rule_destroy(cognitive_rule_t rule);
 extern kern_return_t cognitive_agency_add_rule(cognitive_rule_t rule);
 extern kern_return_t cognitive_agent_apply_rules(
+	cognitive_agent_t agent);
+
+/*
+ * Planning and action execution
+ */
+extern cognitive_action_t cognitive_action_create(
+	const char *name,
+	cognitive_atom_t precondition,
+	cognitive_atom_t effect,
+	float cost);
+extern void cognitive_action_destroy(cognitive_action_t action);
+extern cognitive_plan_t cognitive_plan_create(
+	cognitive_atom_t goal);
+extern void cognitive_plan_destroy(cognitive_plan_t plan);
+extern kern_return_t cognitive_plan_add_action(
+	cognitive_plan_t plan,
+	cognitive_action_t action);
+extern kern_return_t cognitive_agent_create_plan(
+	cognitive_agent_t agent,
+	cognitive_atom_t goal);
+extern kern_return_t cognitive_agent_execute_plan(
 	cognitive_agent_t agent);
 
 /*

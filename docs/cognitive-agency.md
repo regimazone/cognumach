@@ -481,6 +481,66 @@ void demonstrate_inference_rules(void)
 }
 ```
 
+### Example 8: Action Planning and Execution
+
+```c
+void demonstrate_action_planning(void)
+{
+    cognitive_agent_t agent;
+    cognitive_atom_t goal, belief;
+    cognitive_plan_t plan;
+    cognitive_action_t action1, action2;
+    
+    /* Create agent */
+    agent = cognitive_agent_create("planner", current_task());
+    
+    /* Create goal */
+    goal = cognitive_atom_create(
+        global_cognitive_agency.atomspace,
+        ATOM_TYPE_GOAL,
+        "optimize_performance");
+    cognitive_atom_set_truth(goal, 1.0f, 0.9f);
+    cognitive_agent_add_goal(agent, goal);
+    
+    /* Create supporting belief */
+    belief = cognitive_atom_create(
+        global_cognitive_agency.atomspace,
+        ATOM_TYPE_BELIEF,
+        "system_needs_optimization");
+    cognitive_atom_set_truth(belief, 0.85f, 0.8f);
+    cognitive_agent_add_belief(agent, belief);
+    
+    /* Create plan for goal */
+    cognitive_agent_create_plan(agent, goal);
+    
+    /* Alternatively, manually create and add actions */
+    action1 = cognitive_action_create(
+        "analyze_bottlenecks",
+        belief,              /* Precondition */
+        goal,                /* Effect */
+        1.5f);               /* Cost */
+    
+    action2 = cognitive_action_create(
+        "apply_optimizations",
+        goal,                /* Precondition */
+        goal,                /* Effect */
+        2.0f);               /* Cost */
+    
+    /* Create custom plan */
+    plan = cognitive_plan_create(goal);
+    cognitive_plan_add_action(plan, action1);
+    cognitive_plan_add_action(plan, action2);
+    
+    printf("Plan created: %u actions, cost=%.1f\n",
+           plan->action_count, plan->total_cost);
+    
+    /* Execute the plan */
+    cognitive_agent_execute_plan(agent);
+    
+    printf("Plan executed successfully\n");
+}
+```
+
 ## Integration with Mach
 
 ### IPC Integration

@@ -295,6 +295,8 @@ cognitive_agent_create(
 	queue_init(&agent->knowledge);
 	queue_init(&agent->message_queue);
 	agent->message_count = 0;
+	queue_init(&agent->plans);
+	agent->current_plan = NULL;
 	
 	/* IPC setup */
 	agent->control_port = IP_NULL;
@@ -458,14 +460,17 @@ cognitive_agent_act(
 	if (agent == NULL)
 		return KERN_INVALID_ARGUMENT;
 	
+	/* If agent has a current plan, execute it */
+	if (agent->current_plan != NULL) {
+		return cognitive_agent_execute_plan(agent);
+	}
+	
+	/* No plan - perform simple action */
 	simple_lock(&agent->lock);
 	
 	agent->state = AGENT_STATE_ACTING;
 	
-	/* Placeholder for action execution */
-	/* In a full implementation, this would execute planned actions
-	 * based on reasoning outcomes */
-	
+	/* Simple action without planning */
 	agent->actions_executed++;
 	agent->state = AGENT_STATE_IDLE;
 	
@@ -987,4 +992,232 @@ cognitive_agent_apply_rules(
 	simple_unlock(&agent->lock);
 	
 	return (rules_applied > 0) ? KERN_SUCCESS : KERN_FAILURE;
+}
+
+/*
+ * Create a cognitive action
+ */
+cognitive_action_t
+cognitive_action_create(
+	const char *name,
+	cognitive_atom_t precondition,
+	cognitive_atom_t effect,
+	float cost)
+{
+	cognitive_action_t action;
+	
+	if (name == NULL)
+		return NULL;
+	
+	if (cost < 0.0f)
+		return NULL;
+	
+	/* Allocate action structure */
+	action = (cognitive_action_t) kalloc(sizeof(struct cognitive_action));
+	if (action == NULL)
+		return NULL;
+	
+	/* Initialize action */
+	strncpy(action->name, name, sizeof(action->name) - 1);
+	action->name[sizeof(action->name) - 1] = '\0';
+	action->precondition = precondition;
+	action->effect = effect;
+	action->cost = cost;
+	action->priority = 0;
+	action->completed = FALSE;
+	
+	return action;
+}
+
+/*
+ * Destroy a cognitive action
+ */
+void
+cognitive_action_destroy(cognitive_action_t action)
+{
+	if (action == NULL)
+		return;
+	
+	kfree((vm_offset_t) action, sizeof(struct cognitive_action));
+}
+
+/*
+ * Create a cognitive plan
+ */
+cognitive_plan_t
+cognitive_plan_create(
+	cognitive_atom_t goal)
+{
+	cognitive_plan_t plan;
+	
+	if (goal == NULL)
+		return NULL;
+	
+	/* Allocate plan structure */
+	plan = (cognitive_plan_t) kalloc(sizeof(struct cognitive_plan));
+	if (plan == NULL)
+		return NULL;
+	
+	/* Initialize plan */
+	plan->goal = goal;
+	queue_init(&plan->actions);
+	plan->action_count = 0;
+	plan->total_cost = 0.0f;
+	plan->valid = TRUE;
+	
+	goal->ref_count++;
+	
+	return plan;
+}
+
+/*
+ * Destroy a cognitive plan
+ */
+void
+cognitive_plan_destroy(cognitive_plan_t plan)
+{
+	cognitive_action_t action, next_action;
+	
+	if (plan == NULL)
+		return;
+	
+	/* Free all actions */
+	queue_iterate(&plan->actions, action, cognitive_action_t, link) {
+		next_action = (cognitive_action_t) queue_next(&action->link);
+		cognitive_action_destroy(action);
+		action = next_action;
+	}
+	
+	kfree((vm_offset_t) plan, sizeof(struct cognitive_plan));
+}
+
+/*
+ * Add action to a plan
+ */
+kern_return_t
+cognitive_plan_add_action(
+	cognitive_plan_t plan,
+	cognitive_action_t action)
+{
+	if (plan == NULL || action == NULL)
+		return KERN_INVALID_ARGUMENT;
+	
+	/* Add action to plan */
+	queue_enter(&plan->actions, action, cognitive_action_t, link);
+	plan->action_count++;
+	plan->total_cost += action->cost;
+	
+	return KERN_SUCCESS;
+}
+
+/*
+ * Create a plan for achieving a goal
+ */
+kern_return_t
+cognitive_agent_create_plan(
+	cognitive_agent_t agent,
+	cognitive_atom_t goal)
+{
+	cognitive_plan_t plan;
+	cognitive_action_t action1, action2;
+	cognitive_atom_t belief;
+	
+	if (agent == NULL || goal == NULL)
+		return KERN_INVALID_ARGUMENT;
+	
+	simple_lock(&agent->lock);
+	
+	/* Create new plan */
+	plan = cognitive_plan_create(goal);
+	if (plan == NULL) {
+		simple_unlock(&agent->lock);
+		return KERN_RESOURCE_SHORTAGE;
+	}
+	
+	/* Simple planning: create actions based on beliefs */
+	/* In full implementation: use STRIPS, HTN, or other planning algorithm */
+	
+	queue_iterate(&agent->beliefs, belief, cognitive_atom_t, link) {
+		/* If belief supports goal, create action */
+		if (belief->truth.strength > 0.5f) {
+			action1 = cognitive_action_create(
+				"analyze_state",
+				belief,
+				goal,
+				1.0f);
+			
+			if (action1 != NULL) {
+				cognitive_plan_add_action(plan, action1);
+			}
+			
+			action2 = cognitive_action_create(
+				"execute_optimization",
+				belief,
+				goal,
+				2.0f);
+			
+			if (action2 != NULL) {
+				cognitive_plan_add_action(plan, action2);
+			}
+		}
+	}
+	
+	/* Add plan to agent */
+	queue_enter(&agent->plans, plan, cognitive_plan_t, link);
+	if (agent->current_plan == NULL) {
+		agent->current_plan = plan;
+	}
+	
+	simple_unlock(&agent->lock);
+	
+	return KERN_SUCCESS;
+}
+
+/*
+ * Execute the current plan
+ */
+kern_return_t
+cognitive_agent_execute_plan(
+	cognitive_agent_t agent)
+{
+	cognitive_plan_t plan;
+	cognitive_action_t action;
+	unsigned int actions_completed = 0;
+	
+	if (agent == NULL)
+		return KERN_INVALID_ARGUMENT;
+	
+	simple_lock(&agent->lock);
+	
+	plan = agent->current_plan;
+	if (plan == NULL) {
+		simple_unlock(&agent->lock);
+		return KERN_INVALID_ARGUMENT;
+	}
+	
+	agent->state = AGENT_STATE_ACTING;
+	
+	/* Execute each action in the plan */
+	queue_iterate(&plan->actions, action, cognitive_action_t, link) {
+		if (!action->completed) {
+			/* Execute action */
+			/* In full implementation: check preconditions,
+			 * execute effects, update world state */
+			
+			action->completed = TRUE;
+			actions_completed++;
+			agent->actions_executed++;
+		}
+	}
+	
+	/* Check if plan is complete */
+	if (actions_completed == plan->action_count) {
+		plan->valid = FALSE;
+		agent->current_plan = NULL;
+	}
+	
+	agent->state = AGENT_STATE_IDLE;
+	simple_unlock(&agent->lock);
+	
+	return KERN_SUCCESS;
 }
