@@ -121,4 +121,8 @@ extern void timeclose(dev_t dev, int flag);
 extern uint32_t hpclock_read_counter(void);
 extern uint32_t hpclock_get_counter_period_nsec(void);
 
+/* Clock functions for system time and uptime */
+extern void clock_get_system_microtime(unsigned int *secs, unsigned int *microsecs);
+extern void clock_get_uptime(time_value_t *result);
+
 #endif /* _KERN_MACH_CLOCK_H_ */

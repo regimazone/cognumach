@@ -298,6 +298,7 @@ typedef struct slock_irq	*simple_lock_irq_t;
 class	simple_lock_irq_data_t	name;
 
 #define simple_lock_init_irq(l) simple_lock_init(&(l)->slock)
+#define simple_lock_irq_init(l) simple_lock_init_irq(l)  /* Alias for compatibility */
 
 #define simple_lock_irq(l)	({ \
 	spl_t __s = splhigh(); \

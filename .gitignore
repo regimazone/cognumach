@@ -89,3 +89,4 @@ test_*.c
 final_test
 
 *.o
+build-test

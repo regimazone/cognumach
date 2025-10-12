@@ -760,6 +760,47 @@ void mapable_time_init(void)
 	update_mapped_uptime(&uptime);
 }
 
+/*
+ * Get system time in microseconds.
+ * This function provides the current system time in separate seconds
+ * and microseconds components.
+ */
+void
+clock_get_system_microtime(unsigned int *secs, unsigned int *microsecs)
+{
+	time_value64_t current_time;
+	spl_t s;
+
+	s = splclock();
+	read_mapped_time(&current_time);
+	splx(s);
+
+	if (secs != NULL)
+		*secs = (unsigned int)current_time.seconds;
+	if (microsecs != NULL)
+		*microsecs = (unsigned int)(current_time.nanoseconds / 1000);
+}
+
+/*
+ * Get system uptime.
+ * This function provides the time elapsed since boot in a time_value_t structure.
+ */
+void
+clock_get_uptime(time_value_t *result)
+{
+	time_value64_t current_uptime;
+	spl_t s;
+
+	if (result == NULL)
+		return;
+
+	s = splclock();
+	read_mapped_uptime(&current_uptime);
+	splx(s);
+
+	TIME_VALUE64_TO_TIME_VALUE(&current_uptime, result);
+}
+
 int timeopen(dev_t dev, int flag, io_req_t ior)
 {
 	return(0);
