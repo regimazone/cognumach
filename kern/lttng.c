@@ -245,7 +245,11 @@ mach_trace_print_stats(void)
  * Define some basic trace points for key kernel subsystems
  */
 
-/* IPC tracepoints */
+/* IPC tracepoints - declare first, then define */
+MACH_TRACEPOINT_DECLARE(IPC, msg_send);
+MACH_TRACEPOINT_DECLARE(IPC, msg_receive);
+MACH_TRACEPOINT_DECLARE(IPC, port_allocate);
+
 MACH_TRACEPOINT_DEFINE(IPC, msg_send, MACH_TRACE_LEVEL_INFO, 
                        MACH_TRACE_EVENT_IPC_BASE + 1,
                        "IPC message send");
@@ -258,7 +262,11 @@ MACH_TRACEPOINT_DEFINE(IPC, port_allocate, MACH_TRACE_LEVEL_DEBUG,
                        MACH_TRACE_EVENT_IPC_BASE + 3,
                        "IPC port allocate");
 
-/* Scheduler tracepoints */
+/* Scheduler tracepoints - declare first, then define */
+MACH_TRACEPOINT_DECLARE(SCHED, thread_switch);
+MACH_TRACEPOINT_DECLARE(SCHED, thread_create);
+MACH_TRACEPOINT_DECLARE(SCHED, thread_terminate);
+
 MACH_TRACEPOINT_DEFINE(SCHED, thread_switch, MACH_TRACE_LEVEL_DEBUG,
                        MACH_TRACE_EVENT_SCHED_BASE + 1,
                        "Thread context switch");
@@ -271,7 +279,10 @@ MACH_TRACEPOINT_DEFINE(SCHED, thread_terminate, MACH_TRACE_LEVEL_INFO,
                        MACH_TRACE_EVENT_SCHED_BASE + 3,
                        "Thread termination");
 
-/* VM tracepoints */
+/* VM tracepoints - declare first, then define */
+MACH_TRACEPOINT_DECLARE(VM, page_fault);
+MACH_TRACEPOINT_DECLARE(VM, map_enter);
+
 MACH_TRACEPOINT_DEFINE(VM, page_fault, MACH_TRACE_LEVEL_DEBUG,
                        MACH_TRACE_EVENT_VM_BASE + 1,
                        "Page fault");
@@ -280,7 +291,10 @@ MACH_TRACEPOINT_DEFINE(VM, map_enter, MACH_TRACE_LEVEL_DEBUG,
                        MACH_TRACE_EVENT_VM_BASE + 2,
                        "VM map entry");
 
-/* Kernel tracepoints */
+/* Kernel tracepoints - declare first, then define */
+MACH_TRACEPOINT_DECLARE(KERN, startup);
+MACH_TRACEPOINT_DECLARE(KERN, panic);
+
 MACH_TRACEPOINT_DEFINE(KERN, startup, MACH_TRACE_LEVEL_INFO,
                        MACH_TRACE_EVENT_KERN_BASE + 1,
                        "Kernel startup");
@@ -289,7 +303,10 @@ MACH_TRACEPOINT_DEFINE(KERN, panic, MACH_TRACE_LEVEL_EMERG,
                        MACH_TRACE_EVENT_KERN_BASE + 2,
                        "Kernel panic");
 
-/* Debug tracepoints */
+/* Debug tracepoints - declare first, then define */
+MACH_TRACEPOINT_DECLARE(DEBUG, assertion_failed);
+MACH_TRACEPOINT_DECLARE(DEBUG, warning);
+
 MACH_TRACEPOINT_DEFINE(DEBUG, assertion_failed, MACH_TRACE_LEVEL_ERR,
                        MACH_TRACE_EVENT_DEBUG_BASE + 1,
                        "Assertion failed");

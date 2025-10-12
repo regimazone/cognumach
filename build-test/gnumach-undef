@@ -1,6 +1,0 @@
-__mach_trace_IPC_msg_receive
-__mach_trace_IPC_msg_send
-__rela_iplt_end
-__rela_iplt_start
-_end
-etext
