@@ -42,6 +42,8 @@ cognitive_agency_init(void)
 	simple_lock_init(&global_cognitive_agency.lock);
 	queue_init(&global_cognitive_agency.agents);
 	global_cognitive_agency.agent_count = 0;
+	queue_init(&global_cognitive_agency.rules);
+	global_cognitive_agency.rule_count = 0;
 	
 	/* Create global atomspace */
 	global_cognitive_agency.atomspace = cognitive_atomspace_create();
@@ -418,20 +420,29 @@ cognitive_agent_reason(
 	
 	agent->state = AGENT_STATE_REASONING;
 	
-	/* Simple reasoning: check goals against beliefs */
+	/* Phase 1: Check goals against beliefs */
 	queue_iterate(&agent->goals, goal, cognitive_atom_t, link) {
 		queue_iterate(&agent->beliefs, belief, cognitive_atom_t, link) {
-			/* Placeholder for actual reasoning logic */
-			/* In a full implementation, this would use pattern matching,
-			 * inference rules, and planning algorithms */
-			(void)goal;
-			(void)belief;
+			/* Check if belief is relevant to goal */
+			/* In full implementation: pattern matching and unification */
+			
+			/* Simple heuristic: match by truth value strength */
+			if (belief->truth.strength > 0.7f &&
+			    belief->truth.confidence > 0.6f) {
+				/* Strong belief - potentially useful for goal */
+				(void)goal; /* Use goal in planning */
+			}
 		}
 	}
 	
 	agent->reasoning_cycles++;
-	agent->state = AGENT_STATE_IDLE;
+	simple_unlock(&agent->lock);
 	
+	/* Phase 2: Apply inference rules */
+	cognitive_agent_apply_rules(agent);
+	
+	simple_lock(&agent->lock);
+	agent->state = AGENT_STATE_IDLE;
 	simple_unlock(&agent->lock);
 	
 	return KERN_SUCCESS;
@@ -763,4 +774,217 @@ cognitive_agent_learn(
 	simple_unlock(&agent->lock);
 	
 	return KERN_SUCCESS;
+}
+
+/*
+ * Find first atom of a specific type in atomspace
+ */
+cognitive_atom_t
+cognitive_atomspace_find_by_type(
+	cognitive_atomspace_t space,
+	cognitive_atom_type_t type)
+{
+	cognitive_atom_t atom;
+	
+	if (space == NULL)
+		return COGNITIVE_ATOM_NULL;
+	
+	simple_lock(&space->lock);
+	
+	/* Search for first atom of matching type */
+	queue_iterate(&space->atoms, atom, cognitive_atom_t, link) {
+		if (atom->type == type) {
+			atom->ref_count++;
+			simple_unlock(&space->lock);
+			return atom;
+		}
+	}
+	
+	simple_unlock(&space->lock);
+	return COGNITIVE_ATOM_NULL;
+}
+
+/*
+ * Query atomspace for atoms of a specific type
+ */
+unsigned int
+cognitive_atomspace_query(
+	cognitive_atomspace_t space,
+	cognitive_atom_type_t type,
+	cognitive_atom_t *results,
+	unsigned int max_results)
+{
+	cognitive_atom_t atom;
+	unsigned int count = 0;
+	
+	if (space == NULL || results == NULL || max_results == 0)
+		return 0;
+	
+	simple_lock(&space->lock);
+	
+	/* Collect all atoms of matching type */
+	queue_iterate(&space->atoms, atom, cognitive_atom_t, link) {
+		if (atom->type == type && count < max_results) {
+			results[count] = atom;
+			atom->ref_count++;
+			count++;
+		}
+	}
+	
+	simple_unlock(&space->lock);
+	return count;
+}
+
+/*
+ * Traverse links from an atom and call callback for each target
+ */
+kern_return_t
+cognitive_atom_traverse_links(
+	cognitive_atom_t atom,
+	void (*callback)(cognitive_atom_t, void *),
+	void *context)
+{
+	cognitive_atom_link_t link;
+	
+	if (atom == NULL || callback == NULL)
+		return KERN_INVALID_ARGUMENT;
+	
+	simple_lock(&atom->lock);
+	
+	/* Traverse all outgoing links */
+	queue_iterate(&atom->outgoing_links, link, cognitive_atom_link_t, link) {
+		if (link->target != NULL) {
+			callback(link->target, context);
+		}
+	}
+	
+	simple_unlock(&atom->lock);
+	
+	return KERN_SUCCESS;
+}
+
+/*
+ * Create an inference rule
+ */
+cognitive_rule_t
+cognitive_rule_create(
+	const char *name,
+	cognitive_atom_type_t condition_type,
+	cognitive_atom_type_t conclusion_type,
+	float confidence_threshold)
+{
+	cognitive_rule_t rule;
+	
+	if (name == NULL)
+		return NULL;
+	
+	if (confidence_threshold < 0.0f || confidence_threshold > 1.0f)
+		return NULL;
+	
+	/* Allocate rule structure */
+	rule = (cognitive_rule_t) kalloc(sizeof(struct cognitive_rule));
+	if (rule == NULL)
+		return NULL;
+	
+	/* Initialize rule */
+	strncpy(rule->name, name, sizeof(rule->name) - 1);
+	rule->name[sizeof(rule->name) - 1] = '\0';
+	rule->condition_type = condition_type;
+	rule->conclusion_type = conclusion_type;
+	rule->confidence_threshold = confidence_threshold;
+	rule->times_applied = 0;
+	
+	return rule;
+}
+
+/*
+ * Destroy an inference rule
+ */
+void
+cognitive_rule_destroy(cognitive_rule_t rule)
+{
+	if (rule == NULL)
+		return;
+	
+	kfree((vm_offset_t) rule, sizeof(struct cognitive_rule));
+}
+
+/*
+ * Add a rule to the global agency
+ */
+kern_return_t
+cognitive_agency_add_rule(cognitive_rule_t rule)
+{
+	if (rule == NULL)
+		return KERN_INVALID_ARGUMENT;
+	
+	simple_lock(&global_cognitive_agency.lock);
+	queue_enter(&global_cognitive_agency.rules, rule, cognitive_rule_t, link);
+	global_cognitive_agency.rule_count++;
+	simple_unlock(&global_cognitive_agency.lock);
+	
+	return KERN_SUCCESS;
+}
+
+/*
+ * Apply inference rules to an agent's knowledge
+ */
+kern_return_t
+cognitive_agent_apply_rules(
+	cognitive_agent_t agent)
+{
+	cognitive_rule_t rule;
+	cognitive_atom_t atom, new_atom;
+	cognitive_atomspace_t space;
+	unsigned int rules_applied = 0;
+	
+	if (agent == NULL)
+		return KERN_INVALID_ARGUMENT;
+	
+	space = global_cognitive_agency.atomspace;
+	if (space == NULL)
+		return KERN_INVALID_ARGUMENT;
+	
+	simple_lock(&agent->lock);
+	agent->state = AGENT_STATE_REASONING;
+	
+	/* Apply each rule to agent's beliefs */
+	simple_lock(&global_cognitive_agency.lock);
+	
+	queue_iterate(&global_cognitive_agency.rules, rule, cognitive_rule_t, link) {
+		/* Check each belief against the rule condition */
+		queue_iterate(&agent->beliefs, atom, cognitive_atom_t, link) {
+			if (atom->type == rule->condition_type &&
+			    atom->truth.confidence >= rule->confidence_threshold) {
+				
+				/* Rule matches - create conclusion atom */
+				new_atom = cognitive_atom_create(
+					space,
+					rule->conclusion_type,
+					"inferred_knowledge");
+				
+				if (new_atom != NULL) {
+					/* Set truth value based on belief */
+					cognitive_atom_set_truth(
+						new_atom,
+						atom->truth.strength * 0.8f,
+						atom->truth.confidence * 0.9f);
+					
+					/* Add to knowledge base */
+					new_atom->ref_count++;
+					queue_enter(&agent->knowledge, new_atom, cognitive_atom_t, link);
+					
+					rule->times_applied++;
+					rules_applied++;
+				}
+			}
+		}
+	}
+	
+	simple_unlock(&global_cognitive_agency.lock);
+	
+	agent->state = AGENT_STATE_IDLE;
+	simple_unlock(&agent->lock);
+	
+	return (rules_applied > 0) ? KERN_SUCCESS : KERN_FAILURE;
 }

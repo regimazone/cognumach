@@ -183,6 +183,35 @@ kern_return_t cognitive_agent_receive_message(
 /* Check pending messages */
 unsigned int cognitive_agent_pending_messages(
     cognitive_agent_t agent);
+
+/* Pattern matching */
+cognitive_atom_t cognitive_atomspace_find_by_type(
+    cognitive_atomspace_t space,
+    cognitive_atom_type_t type);
+
+unsigned int cognitive_atomspace_query(
+    cognitive_atomspace_t space,
+    cognitive_atom_type_t type,
+    cognitive_atom_t *results,
+    unsigned int max_results);
+
+kern_return_t cognitive_atom_traverse_links(
+    cognitive_atom_t atom,
+    void (*callback)(cognitive_atom_t, void *),
+    void *context);
+
+/* Inference rules */
+cognitive_rule_t cognitive_rule_create(
+    const char *name,
+    cognitive_atom_type_t condition_type,
+    cognitive_atom_type_t conclusion_type,
+    float confidence_threshold);
+
+kern_return_t cognitive_agency_add_rule(
+    cognitive_rule_t rule);
+
+kern_return_t cognitive_agent_apply_rules(
+    cognitive_agent_t agent);
 ```
 
 ### Query and Introspection
@@ -361,6 +390,94 @@ void demonstrate_message_queue(void)
         /* Process message through reasoning */
         cognitive_agent_reason(receiver);
     }
+}
+```
+
+### Example 6: Pattern Matching and Queries
+
+```c
+void demonstrate_pattern_matching(void)
+{
+    cognitive_atomspace_t space = global_cognitive_agency.atomspace;
+    cognitive_atom_t results[10];
+    unsigned int count;
+    
+    /* Query for all goal atoms */
+    count = cognitive_atomspace_query(
+        space,
+        ATOM_TYPE_GOAL,
+        results,
+        10);
+    
+    printf("Found %u goal atoms:\n", count);
+    for (unsigned int i = 0; i < count; i++) {
+        printf("  - %s (strength=%.2f, confidence=%.2f)\n",
+               results[i]->name,
+               results[i]->truth.strength,
+               results[i]->truth.confidence);
+    }
+    
+    /* Find first concept atom */
+    cognitive_atom_t concept = cognitive_atomspace_find_by_type(
+        space,
+        ATOM_TYPE_CONCEPT);
+    
+    if (concept != NULL) {
+        /* Traverse links from this concept */
+        cognitive_atom_traverse_links(
+            concept,
+            print_linked_atom,
+            NULL);
+    }
+}
+```
+
+### Example 7: Inference Rules and Forward Chaining
+
+```c
+void demonstrate_inference_rules(void)
+{
+    cognitive_agent_t agent;
+    cognitive_rule_t rule1, rule2;
+    cognitive_atom_t belief, goal;
+    
+    /* Create agent */
+    agent = cognitive_agent_create("reasoner", current_task());
+    
+    /* Create inference rules */
+    rule1 = cognitive_rule_create(
+        "high_load_implies_optimization",
+        ATOM_TYPE_BELIEF,    /* Condition: belief */
+        ATOM_TYPE_ACTION,    /* Conclusion: action */
+        0.7f);               /* Confidence threshold */
+    
+    rule2 = cognitive_rule_create(
+        "optimization_needed_implies_action",
+        ATOM_TYPE_ACTION,    /* Condition: action needed */
+        ATOM_TYPE_SCHEMA,    /* Conclusion: behavior schema */
+        0.6f);
+    
+    /* Add rules to global agency */
+    cognitive_agency_add_rule(rule1);
+    cognitive_agency_add_rule(rule2);
+    
+    /* Create belief that will trigger rule */
+    belief = cognitive_atom_create(
+        global_cognitive_agency.atomspace,
+        ATOM_TYPE_BELIEF,
+        "cpu_load_high");
+    cognitive_atom_set_truth(belief, 0.9f, 0.85f);
+    cognitive_agent_add_belief(agent, belief);
+    
+    /* Apply rules - will create inferred knowledge */
+    kern_return_t result = cognitive_agent_apply_rules(agent);
+    if (result == KERN_SUCCESS) {
+        printf("Rules applied successfully\n");
+        printf("New knowledge inferred from beliefs\n");
+    }
+    
+    /* Perform full reasoning cycle (includes rule application) */
+    cognitive_agent_reason(agent);
 }
 ```
 

@@ -162,6 +162,19 @@ typedef struct cognitive_atomspace {
 } *cognitive_atomspace_t;
 
 /*
+ * Cognitive Inference Rule
+ * Simple rule for forward chaining inference
+ */
+typedef struct cognitive_rule {
+	queue_chain_t link;                    /* Queue linkage */
+	char name[64];                         /* Rule name */
+	cognitive_atom_type_t condition_type;  /* Condition type */
+	cognitive_atom_type_t conclusion_type; /* Conclusion type */
+	float confidence_threshold;            /* Minimum confidence */
+	unsigned int times_applied;            /* Application count */
+} *cognitive_rule_t;
+
+/*
  * Cognitive Agency System
  * Global cognitive system state
  */
@@ -169,6 +182,8 @@ typedef struct cognitive_agency {
 	queue_head_t agents;                   /* Active agents */
 	unsigned int agent_count;              /* Total agents */
 	cognitive_atomspace_t atomspace;       /* Global atomspace */
+	queue_head_t rules;                    /* Inference rules */
+	unsigned int rule_count;               /* Total rules */
 	boolean_t initialized;                 /* Initialization flag */
 	decl_simple_lock_data(, lock)         /* Global lock */
 } cognitive_agency_t;
@@ -245,6 +260,35 @@ extern unsigned int cognitive_agent_pending_messages(
 extern kern_return_t cognitive_agent_learn(
 	cognitive_agent_t agent,
 	cognitive_atom_t experience);
+
+/*
+ * Pattern matching and queries
+ */
+extern cognitive_atom_t cognitive_atomspace_find_by_type(
+	cognitive_atomspace_t space,
+	cognitive_atom_type_t type);
+extern unsigned int cognitive_atomspace_query(
+	cognitive_atomspace_t space,
+	cognitive_atom_type_t type,
+	cognitive_atom_t *results,
+	unsigned int max_results);
+extern kern_return_t cognitive_atom_traverse_links(
+	cognitive_atom_t atom,
+	void (*callback)(cognitive_atom_t, void *),
+	void *context);
+
+/*
+ * Inference and reasoning
+ */
+extern cognitive_rule_t cognitive_rule_create(
+	const char *name,
+	cognitive_atom_type_t condition_type,
+	cognitive_atom_type_t conclusion_type,
+	float confidence_threshold);
+extern void cognitive_rule_destroy(cognitive_rule_t rule);
+extern kern_return_t cognitive_agency_add_rule(cognitive_rule_t rule);
+extern kern_return_t cognitive_agent_apply_rules(
+	cognitive_agent_t agent);
 
 /*
  * Query and introspection
