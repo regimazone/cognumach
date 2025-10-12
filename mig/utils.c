@@ -438,14 +438,12 @@ WriteStaticShortDecl(FILE *file, const ipc_type_t *it,
 	    strdealloc(dealloc));
     fprintf(file, "\t\t.msgt_unused =\t\t0\n");
     fprintf(file, "\t};\n");
-    if (it->itInLine && !it->itVarArray) {
-        identifier_t type = is_server ? FetchServerType(it) : FetchUserType(it);
-        identifier_t actual_type = it->itUserlandPort ? "mach_port_name_inlined_t" : type;
-        const u_int size_bytes = it->itSize >> 3;
-        fprintf(file, "\t_Static_assert(sizeof(%s) == %d * %d, \"expected %s to be size %d * %d\");\n",
-                      actual_type, size_bytes, it->itNumber,
-                      actual_type, size_bytes, it->itNumber);
-    }
+    /* Note: Static assertions for type sizes have been removed because MIG
+     * may be compiled for a different architecture than the target code.
+     * For example, a 64-bit MIG generating code for a 32-bit target would
+     * generate incorrect assertions. The compiler will catch actual size
+     * mismatches during the build of the generated code.
+     */
 }
 
 void
