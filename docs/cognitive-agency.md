@@ -113,6 +113,22 @@ kern_return_t cognitive_atom_set_truth(
     cognitive_atom_t atom,
     float strength,
     float confidence);
+
+/* Create link between atoms */
+kern_return_t cognitive_atom_create_link(
+    cognitive_atom_t from,
+    cognitive_atom_t to,
+    unsigned int link_type,
+    float strength);
+
+/* Remove link between atoms */
+kern_return_t cognitive_atom_remove_link(
+    cognitive_atom_t from,
+    cognitive_atom_t to);
+
+/* Count links for an atom */
+unsigned int cognitive_atom_count_links(
+    cognitive_atom_t atom);
 ```
 
 ### Agent Management
@@ -146,6 +162,26 @@ kern_return_t cognitive_agent_reason(
 
 /* Execute actions */
 kern_return_t cognitive_agent_act(
+    cognitive_agent_t agent);
+
+/* Learn from experience */
+kern_return_t cognitive_agent_learn(
+    cognitive_agent_t agent,
+    cognitive_atom_t experience);
+
+/* Send message between agents */
+kern_return_t cognitive_agent_send_message(
+    cognitive_agent_t from,
+    cognitive_agent_t to,
+    cognitive_atom_t message);
+
+/* Receive message */
+kern_return_t cognitive_agent_receive_message(
+    cognitive_agent_t agent,
+    cognitive_atom_t *message);
+
+/* Check pending messages */
+unsigned int cognitive_agent_pending_messages(
     cognitive_agent_t agent);
 ```
 
@@ -236,23 +272,95 @@ void demonstrate_agent_communication(void)
 }
 ```
 
-### Example 3: Knowledge Representation
+### Example 3: Knowledge Representation with Links
 
 ```c
 void build_knowledge_base(void)
 {
     cognitive_atomspace_t space = global_cognitive_agency.atomspace;
-    cognitive_atom_t concept1, concept2, link;
+    cognitive_atom_t concept1, concept2;
     
     /* Create concepts */
     concept1 = cognitive_atom_create(space, ATOM_TYPE_CONCEPT, "memory");
     concept2 = cognitive_atom_create(space, ATOM_TYPE_CONCEPT, "performance");
     
-    /* Create relationship */
-    link = cognitive_atom_create(space, ATOM_TYPE_LINK, "affects");
-    cognitive_atom_set_truth(link, 0.85f, 0.8f);
+    /* Create relationship link between atoms */
+    cognitive_atom_create_link(concept1, concept2, 1 /* AFFECTS */, 0.85f);
     
-    /* This represents: memory "affects" performance with 85% strength */
+    /* Set truth values */
+    cognitive_atom_set_truth(concept1, 0.9f, 0.8f);
+    cognitive_atom_set_truth(concept2, 0.8f, 0.7f);
+    
+    /* Query link count */
+    unsigned int links = cognitive_atom_count_links(concept1);
+    printf("Concept 'memory' has %u links\n", links);
+}
+```
+
+### Example 4: Agent Learning
+
+```c
+void demonstrate_agent_learning(void)
+{
+    cognitive_agent_t agent;
+    cognitive_atom_t experience;
+    
+    /* Create learning agent */
+    agent = cognitive_agent_create("adaptive_scheduler", current_task());
+    
+    /* Create experience atom */
+    experience = cognitive_atom_create(
+        global_cognitive_agency.atomspace,
+        ATOM_TYPE_VALUE,
+        "reduced_context_switches");
+    cognitive_atom_set_truth(experience, 0.8f, 0.5f);
+    
+    /* Agent learns from experience */
+    cognitive_agent_learn(agent, experience);
+    
+    /* Truth value confidence increased through learning */
+    printf("Experience confidence: %.2f\n", experience->truth.confidence);
+}
+```
+
+### Example 5: Message Queue and Communication
+
+```c
+void demonstrate_message_queue(void)
+{
+    cognitive_agent_t sender, receiver;
+    cognitive_atom_t msg1, msg2, received;
+    
+    /* Create agents */
+    sender = cognitive_agent_create("monitor", current_task());
+    receiver = cognitive_agent_create("optimizer", current_task());
+    
+    /* Create messages */
+    msg1 = cognitive_atom_create(
+        global_cognitive_agency.atomspace,
+        ATOM_TYPE_VALUE,
+        "high_cpu_load");
+    msg2 = cognitive_atom_create(
+        global_cognitive_agency.atomspace,
+        ATOM_TYPE_VALUE,
+        "memory_pressure");
+    
+    /* Send messages */
+    cognitive_agent_send_message(sender, receiver, msg1);
+    cognitive_agent_send_message(sender, receiver, msg2);
+    
+    /* Check message queue */
+    unsigned int pending = cognitive_agent_pending_messages(receiver);
+    printf("Receiver has %u pending messages\n", pending);
+    
+    /* Receive messages */
+    while (cognitive_agent_pending_messages(receiver) > 0) {
+        cognitive_agent_receive_message(receiver, &received);
+        printf("Received message: %s\n", received->name);
+        
+        /* Process message through reasoning */
+        cognitive_agent_reason(receiver);
+    }
 }
 ```
 

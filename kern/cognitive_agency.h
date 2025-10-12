@@ -61,6 +61,17 @@ typedef struct cognitive_truth_value {
 } cognitive_truth_value_t;
 
 /*
+ * Cognitive Atom Link
+ * Represents relationships between atoms
+ */
+typedef struct cognitive_atom_link {
+	queue_chain_t link;                    /* Queue linkage */
+	struct cognitive_atom *target;         /* Target atom */
+	unsigned int link_type;                /* Type of relationship */
+	float strength;                        /* Link strength [0.0, 1.0] */
+} *cognitive_atom_link_t;
+
+/*
  * Cognitive Atom
  * Basic unit of knowledge in the atomspace
  */
@@ -72,6 +83,8 @@ typedef struct cognitive_atom {
 	cognitive_truth_value_t truth;         /* Truth value */
 	void *data;                            /* Type-specific data */
 	unsigned int ref_count;                /* Reference counter */
+	queue_head_t outgoing_links;           /* Outgoing relationships */
+	queue_head_t incoming_links;           /* Incoming relationships */
 	decl_simple_lock_data(, lock)         /* Synchronization */
 } *cognitive_atom_t;
 
@@ -90,6 +103,18 @@ typedef enum {
 } cognitive_agent_state_t;
 
 /*
+ * Cognitive Message
+ * Message in agent's message queue
+ */
+typedef struct cognitive_message {
+	queue_chain_t link;                    /* Queue linkage */
+	struct cognitive_agent *sender;        /* Sender agent */
+	struct cognitive_atom *content;        /* Message content */
+	unsigned int priority;                 /* Message priority */
+	unsigned int timestamp;                /* Timestamp */
+} *cognitive_message_t;
+
+/*
  * Cognitive Agent
  * Autonomous entity with goals and reasoning capabilities
  */
@@ -103,6 +128,8 @@ typedef struct cognitive_agent {
 	queue_head_t goals;                    /* Goal queue */
 	queue_head_t beliefs;                  /* Belief set */
 	queue_head_t knowledge;                /* Knowledge base (atoms) */
+	queue_head_t message_queue;            /* Incoming messages */
+	unsigned int message_count;            /* Message queue size */
 	
 	/* IPC integration */
 	ipc_port_t control_port;               /* Control port */
@@ -116,6 +143,7 @@ typedef struct cognitive_agent {
 	unsigned int reasoning_cycles;         /* Reasoning iterations */
 	unsigned int actions_executed;         /* Actions taken */
 	unsigned int messages_processed;       /* Messages handled */
+	unsigned int messages_sent;            /* Messages sent */
 	
 	decl_simple_lock_data(, lock)         /* Synchronization */
 } *cognitive_agent_t;
@@ -173,6 +201,16 @@ extern kern_return_t cognitive_atom_set_truth(
 	cognitive_atom_t atom,
 	float strength,
 	float confidence);
+extern kern_return_t cognitive_atom_create_link(
+	cognitive_atom_t from,
+	cognitive_atom_t to,
+	unsigned int link_type,
+	float strength);
+extern kern_return_t cognitive_atom_remove_link(
+	cognitive_atom_t from,
+	cognitive_atom_t to);
+extern unsigned int cognitive_atom_count_links(
+	cognitive_atom_t atom);
 
 /*
  * Agent operations
@@ -202,6 +240,11 @@ extern kern_return_t cognitive_agent_send_message(
 extern kern_return_t cognitive_agent_receive_message(
 	cognitive_agent_t agent,
 	cognitive_atom_t *message);
+extern unsigned int cognitive_agent_pending_messages(
+	cognitive_agent_t agent);
+extern kern_return_t cognitive_agent_learn(
+	cognitive_agent_t agent,
+	cognitive_atom_t experience);
 
 /*
  * Query and introspection

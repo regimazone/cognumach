@@ -172,6 +172,8 @@ cognitive_atom_create(
 	atom->truth.count = 0;
 	atom->data = NULL;
 	atom->ref_count = 1;
+	queue_init(&atom->outgoing_links);
+	queue_init(&atom->incoming_links);
 	
 	/* Add to atomspace */
 	queue_enter(&space->atoms, atom, cognitive_atom_t, link);
@@ -289,6 +291,8 @@ cognitive_agent_create(
 	queue_init(&agent->goals);
 	queue_init(&agent->beliefs);
 	queue_init(&agent->knowledge);
+	queue_init(&agent->message_queue);
+	agent->message_count = 0;
 	
 	/* IPC setup */
 	agent->control_port = IP_NULL;
@@ -302,6 +306,7 @@ cognitive_agent_create(
 	agent->reasoning_cycles = 0;
 	agent->actions_executed = 0;
 	agent->messages_processed = 0;
+	agent->messages_sent = 0;
 	
 	/* Add to global agency */
 	simple_lock(&global_cognitive_agency.lock);
@@ -467,19 +472,33 @@ cognitive_agent_send_message(
 	cognitive_agent_t to,
 	cognitive_atom_t message)
 {
+	cognitive_message_t msg;
+	
 	if (from == NULL || to == NULL || message == NULL)
 		return KERN_INVALID_ARGUMENT;
 	
-	/* Placeholder for cognitive IPC */
-	/* In a full implementation, this would integrate with Mach IPC
-	 * to send semantic messages between agents */
+	/* Allocate message structure */
+	msg = (cognitive_message_t) kalloc(sizeof(struct cognitive_message));
+	if (msg == NULL)
+		return KERN_RESOURCE_SHORTAGE;
 	
+	/* Initialize message */
+	msg->sender = from;
+	msg->content = message;
+	msg->priority = 0;
+	msg->timestamp = 0; /* In real implementation, use timer_read() */
+	
+	/* Update sender state */
 	simple_lock(&from->lock);
 	from->state = AGENT_STATE_COMMUNICATING;
-	from->messages_processed++;
+	from->messages_sent++;
 	simple_unlock(&from->lock);
 	
+	/* Add message to recipient's queue */
 	simple_lock(&to->lock);
+	message->ref_count++;
+	queue_enter(&to->message_queue, msg, cognitive_message_t, link);
+	to->message_count++;
 	to->messages_processed++;
 	simple_unlock(&to->lock);
 	
@@ -494,11 +513,31 @@ cognitive_agent_receive_message(
 	cognitive_agent_t agent,
 	cognitive_atom_t *message)
 {
+	cognitive_message_t msg;
+	
 	if (agent == NULL || message == NULL)
 		return KERN_INVALID_ARGUMENT;
 	
-	/* Placeholder for cognitive IPC receive */
-	*message = COGNITIVE_ATOM_NULL;
+	simple_lock(&agent->lock);
+	
+	/* Check if messages are available */
+	if (queue_empty(&agent->message_queue)) {
+		simple_unlock(&agent->lock);
+		*message = COGNITIVE_ATOM_NULL;
+		return KERN_SUCCESS;
+	}
+	
+	/* Dequeue first message */
+	queue_remove_first(&agent->message_queue, msg, cognitive_message_t, link);
+	agent->message_count--;
+	
+	simple_unlock(&agent->lock);
+	
+	/* Extract message content */
+	*message = msg->content;
+	
+	/* Free message structure */
+	kfree((vm_offset_t) msg, sizeof(struct cognitive_message));
 	
 	return KERN_SUCCESS;
 }
@@ -549,6 +588,178 @@ cognitive_agent_get_state(
 	
 	simple_lock(&agent->lock);
 	*state = agent->state;
+	simple_unlock(&agent->lock);
+	
+	return KERN_SUCCESS;
+}
+
+/*
+ * Create a link between two atoms
+ */
+kern_return_t
+cognitive_atom_create_link(
+	cognitive_atom_t from,
+	cognitive_atom_t to,
+	unsigned int link_type,
+	float strength)
+{
+	cognitive_atom_link_t link;
+	
+	if (from == NULL || to == NULL)
+		return KERN_INVALID_ARGUMENT;
+	
+	if (strength < 0.0f || strength > 1.0f)
+		return KERN_INVALID_ARGUMENT;
+	
+	/* Allocate link structure */
+	link = (cognitive_atom_link_t) kalloc(sizeof(struct cognitive_atom_link));
+	if (link == NULL)
+		return KERN_RESOURCE_SHORTAGE;
+	
+	/* Initialize link */
+	link->target = to;
+	link->link_type = link_type;
+	link->strength = strength;
+	
+	/* Add to source atom's outgoing links */
+	simple_lock(&from->lock);
+	queue_enter(&from->outgoing_links, link, cognitive_atom_link_t, link);
+	simple_unlock(&from->lock);
+	
+	/* Add to target atom's incoming links */
+	simple_lock(&to->lock);
+	to->ref_count++;
+	queue_enter(&to->incoming_links, link, cognitive_atom_link_t, link);
+	simple_unlock(&to->lock);
+	
+	return KERN_SUCCESS;
+}
+
+/*
+ * Remove a link between two atoms
+ */
+kern_return_t
+cognitive_atom_remove_link(
+	cognitive_atom_t from,
+	cognitive_atom_t to)
+{
+	cognitive_atom_link_t link;
+	cognitive_atom_link_t found_link = NULL;
+	
+	if (from == NULL || to == NULL)
+		return KERN_INVALID_ARGUMENT;
+	
+	simple_lock(&from->lock);
+	
+	/* Find and remove from outgoing links */
+	queue_iterate(&from->outgoing_links, link, cognitive_atom_link_t, link) {
+		if (link->target == to) {
+			queue_remove(&from->outgoing_links, link, cognitive_atom_link_t, link);
+			found_link = link;
+			break;
+		}
+	}
+	
+	simple_unlock(&from->lock);
+	
+	if (found_link == NULL)
+		return KERN_INVALID_ARGUMENT;
+	
+	/* Remove from target's incoming links */
+	simple_lock(&to->lock);
+	queue_remove(&to->incoming_links, found_link, cognitive_atom_link_t, link);
+	to->ref_count--;
+	simple_unlock(&to->lock);
+	
+	/* Free link structure */
+	kfree((vm_offset_t) found_link, sizeof(struct cognitive_atom_link));
+	
+	return KERN_SUCCESS;
+}
+
+/*
+ * Count links connected to an atom
+ */
+unsigned int
+cognitive_atom_count_links(
+	cognitive_atom_t atom)
+{
+	cognitive_atom_link_t link;
+	unsigned int count = 0;
+	
+	if (atom == NULL)
+		return 0;
+	
+	simple_lock(&atom->lock);
+	
+	/* Count outgoing links */
+	queue_iterate(&atom->outgoing_links, link, cognitive_atom_link_t, link) {
+		count++;
+	}
+	
+	/* Count incoming links */
+	queue_iterate(&atom->incoming_links, link, cognitive_atom_link_t, link) {
+		count++;
+	}
+	
+	simple_unlock(&atom->lock);
+	
+	return count;
+}
+
+/*
+ * Get count of pending messages for an agent
+ */
+unsigned int
+cognitive_agent_pending_messages(
+	cognitive_agent_t agent)
+{
+	unsigned int count;
+	
+	if (agent == NULL)
+		return 0;
+	
+	simple_lock(&agent->lock);
+	count = agent->message_count;
+	simple_unlock(&agent->lock);
+	
+	return count;
+}
+
+/*
+ * Learning operation for agent
+ */
+kern_return_t
+cognitive_agent_learn(
+	cognitive_agent_t agent,
+	cognitive_atom_t experience)
+{
+	if (agent == NULL || experience == NULL)
+		return KERN_INVALID_ARGUMENT;
+	
+	simple_lock(&agent->lock);
+	
+	agent->state = AGENT_STATE_LEARNING;
+	
+	/* Update truth values based on experience */
+	simple_lock(&experience->lock);
+	
+	/* Simple learning: increase confidence with each observation */
+	if (experience->truth.confidence < 1.0f) {
+		experience->truth.confidence += 0.05f;
+		if (experience->truth.confidence > 1.0f)
+			experience->truth.confidence = 1.0f;
+	}
+	experience->truth.count++;
+	
+	simple_unlock(&experience->lock);
+	
+	/* Add to knowledge base if not already present */
+	experience->ref_count++;
+	queue_enter(&agent->knowledge, experience, cognitive_atom_t, link);
+	
+	agent->state = AGENT_STATE_IDLE;
+	
 	simple_unlock(&agent->lock);
 	
 	return KERN_SUCCESS;
