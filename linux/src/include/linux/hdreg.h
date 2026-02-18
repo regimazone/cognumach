@@ -162,8 +162,8 @@ struct hd_driveid {
 	unsigned short  word72;
 	unsigned short  word73;
 	unsigned short  word74;
-	unsigned short  word75;
-	unsigned short  word76;
+	unsigned short  queue_depth;	/* word 75: queue depth (bits 0-4) */
+	unsigned short  sata_capability;/* word 76: SATA capabilities */
 	unsigned short  word77;
 	unsigned short  word78;
 	unsigned short  word79;

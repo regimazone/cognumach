@@ -459,7 +459,7 @@ void pci_drv_unregister(struct drv_id_info *drv_id)
   Return the index, or 0 on failure.
   The 2.4 kernel now includes this function.
 */
-int pci_find_capability(struct pci_dev *pdev, int findtype)
+static int pci_find_capability_local(struct pci_dev *pdev, int findtype)
 {
 	u16 pci_status, cap_type;
 	u8 pci_cap_idx;
@@ -488,7 +488,7 @@ int acpi_wake(struct pci_dev *pdev)
 	u32 base[5], romaddr;
 	u16 pci_command, pwr_command;
 	u8  pci_latency, pci_cacheline, irq;
-	int i, pwr_cmd_idx = pci_find_capability(pdev, PCI_CAP_ID_PM);
+	int i, pwr_cmd_idx = pci_find_capability_local(pdev, PCI_CAP_ID_PM);
 
 	if (pwr_cmd_idx == 0)
 		return 0;
@@ -520,7 +520,7 @@ int acpi_wake(struct pci_dev *pdev)
 int acpi_set_pwr_state(struct pci_dev *pdev, enum acpi_pwr_state new_state)
 {
 	u16 pwr_command;
-	int pwr_cmd_idx = pci_find_capability(pdev, PCI_CAP_ID_PM);
+	int pwr_cmd_idx = pci_find_capability_local(pdev, PCI_CAP_ID_PM);
 
 	if (pwr_cmd_idx == 0)
 		return 0;
