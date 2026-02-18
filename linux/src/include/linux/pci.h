@@ -65,6 +65,7 @@
 #define  PCI_COMMAND_FAST_BACK	0x200	/* Enable back-to-back writes */
 
 #define PCI_STATUS		0x06	/* 16 bits */
+#define  PCI_STATUS_CAP_LIST	0x10	/* Support Capability List */
 #define  PCI_STATUS_66MHZ	0x20	/* Support 66 Mhz PCI 2.1 bus */
 #define  PCI_STATUS_UDF		0x40	/* Support User Definable Features */
 
@@ -1121,6 +1122,22 @@
 #define PCI_SLOT(devfn)		(((devfn) >> 3) & 0x1f)
 #define PCI_FUNC(devfn)		((devfn) & 0x07)
 
+/* PCI device BAR resource tracking - must be defined before pci_dev struct */
+#define PCI_NUM_RESOURCES	6
+
+/*
+ * PCI Resource structure - must be defined before pci_dev
+ */
+struct pci_resource {
+	unsigned long start;		/* resource start address */
+	unsigned long end;		/* resource end address */
+	unsigned long flags;		/* resource flags */
+	char *name;			/* resource name */
+	struct pci_resource *parent;	/* parent resource */
+	struct pci_resource *sibling;	/* sibling resource */
+	struct pci_resource *child;	/* child resource */
+};
+
 /*
  * There is one pci_dev structure for each slot-number/function-number
  * combination:
@@ -1175,16 +1192,8 @@ struct pci_bus {
 
 /*
  * PCI Resource Management
+ * Note: struct pci_resource is defined earlier in this file
  */
-struct pci_resource {
-	unsigned long start;		/* resource start address */
-	unsigned long end;		/* resource end address */
-	unsigned long flags;		/* resource flags */
-	char *name;			/* resource name */
-	struct pci_resource *parent;	/* parent resource */
-	struct pci_resource *sibling;	/* sibling resource */
-	struct pci_resource *child;	/* child resource */
-};
 
 /* Resource flags */
 #define PCI_IORESOURCE_IO		0x00000100	/* Resource type */
@@ -1206,9 +1215,6 @@ struct pci_resource {
 #define PCI_IORESOURCE_UNSET		0x20000000
 #define PCI_IORESOURCE_AUTO		0x40000000
 #define PCI_IORESOURCE_BUSY		0x80000000	/* Driver has marked this resource busy */
-
-/* PCI device BAR resource tracking */
-#define PCI_NUM_RESOURCES	6
 
 /*
  * This is used to map a vendor-id/device-id pair into device-specific
@@ -1239,8 +1245,8 @@ extern int get_pci_list (char *buf);
 /* PCIe capability functions */
 extern int pci_find_capability (struct pci_dev *dev, int cap);
 extern int pci_find_ext_capability (struct pci_dev *dev, int cap);
-extern int pcie_capability_read_word (struct pci_dev *dev, int pos, u16 *val);
-extern int pcie_capability_write_word (struct pci_dev *dev, int pos, u16 val);
+extern int pcie_capability_read_word (struct pci_dev *dev, int pos, unsigned short *val);
+extern int pcie_capability_write_word (struct pci_dev *dev, int pos, unsigned short val);
 
 /* PCI resource management functions */
 extern int pci_request_regions(struct pci_dev *pdev, const char *res_name);
@@ -1249,8 +1255,8 @@ extern int pci_assign_resource(struct pci_dev *dev, int i);
 extern void pci_setup_device_resources(struct pci_dev *dev);
 
 /* PCI configuration space access for extended (PCIe) registers */
-extern int pci_read_config_dword_ext(struct pci_dev *dev, int pos, u32 *val);
-extern int pci_write_config_dword_ext(struct pci_dev *dev, int pos, u32 val);
+extern int pci_read_config_dword_ext(struct pci_dev *dev, int pos, unsigned int *val);
+extern int pci_write_config_dword_ext(struct pci_dev *dev, int pos, unsigned int val);
 
 #endif /* __KERNEL__ */
 #endif /* LINUX_PCI_H */

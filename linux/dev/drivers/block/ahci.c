@@ -998,7 +998,7 @@ static void ahci_probe_dev(unsigned char bus, unsigned char device)
 	/* Report controller capabilities */
 	u32 cap = readl(&ahci_host->cap);
 	u32 cap2 = readl(&ahci_host->cap2);
-	u32 version = readl(&ahci_host->vs);
+	u32 version = readl(&ahci_host->v);
 	
 	printk("ahci: %02x:%02x.%x: AHCI %u.%u controller\n", bus, dev, fun, 
 		   version >> 16, (version >> 8) & 0xff);
